@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -53,11 +54,33 @@ export class AuthService {
       throw new UnauthorizedException('Email ou mot de passe incorrect');
     }
 
-    const payload = {
-      sub: user.id,
-      role: user.role,
-      departementId: user.departementId,
-    };
+    return this.generateTokens(user.id, user.role, user.departementId);
+  }
+
+  async refreshAccessToken(dto: RefreshTokenDto) {
+    let payload: any;
+
+    try {
+      payload = this.jwtService.verify(dto.refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+    } catch (err) {
+      throw new UnauthorizedException('Refresh token invalide ou expiré');
+    }
+
+    const user = await this.prisma.utilisateur.findUnique({
+      where: { id: payload.sub },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Refresh token invalide ou expiré');
+    }
+
+    return this.generateTokens(user.id, user.role, user.departementId);
+  }
+
+  private generateTokens(userId: number, role: string, departementId: number | null) {
+    const payload = { sub: userId, role, departementId };
 
     const accessToken = this.jwtService.sign(payload);
 
