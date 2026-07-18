@@ -1,6 +1,14 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Role, StatutApprobation, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEtapeDto } from './dto/create-etape.dto';
+import { DecideApprobationDto } from './dto/decide-approbation.dto';
+
+interface CurrentUser {
+  userId: number;
+  role: Role;
+  departementId: number | null;
+}
 
 @Injectable()
 export class WorkflowService {
@@ -43,6 +51,69 @@ export class WorkflowService {
     return this.prisma.workflowEtape.findMany({
       where: { categorieId },
       orderBy: { ordre: 'asc' },
+    });
+  }
+
+  async decideApprobation(approbationId: number, dto: DecideApprobationDto, user: CurrentUser) {
+    const approbation = await this.prisma.approbation.findUnique({
+      where: { id: approbationId },
+      include: { etape: true, demande: true },
+    });
+
+    if (!approbation) {
+      throw new NotFoundException('Approbation introuvable');
+    }
+
+    if (approbation.statut !== StatutApprobation.EN_ATTENTE) {
+      throw new BadRequestException('Cette étape a déjà été traitée');
+    }
+
+    if (user.role !== approbation.etape.roleApprobateur) {
+      throw new ForbiddenException(
+        `Seul un utilisateur avec le rôle ${approbation.etape.roleApprobateur} peut traiter cette étape`,
+      );
+    }
+
+    await this.prisma.approbation.update({
+      where: { id: approbationId },
+      data: {
+        statut: dto.statut,
+        commentaire: dto.commentaire,
+        date: new Date(),
+        approbateurId: user.userId,
+      },
+    });
+
+    if (dto.statut === StatutApprobation.REJETE) {
+      return this.prisma.demande.update({
+        where: { id: approbation.demandeId },
+        data: { statut: StatutDemande.REJETE },
+      });
+    }
+
+    const prochaineEtape = await this.prisma.workflowEtape.findFirst({
+      where: {
+        categorieId: approbation.demande.categorieId,
+        ordre: { gt: approbation.etape.ordre },
+      },
+      orderBy: { ordre: 'asc' },
+    });
+
+    if (prochaineEtape) {
+      await this.prisma.approbation.create({
+        data: {
+          demandeId: approbation.demandeId,
+          etapeId: prochaineEtape.id,
+          statut: StatutApprobation.EN_ATTENTE,
+        },
+      });
+
+      return this.prisma.demande.findUnique({ where: { id: approbation.demandeId } });
+    }
+
+    return this.prisma.demande.update({
+      where: { id: approbation.demandeId },
+      data: { statut: StatutDemande.EN_COURS },
     });
   }
 }
