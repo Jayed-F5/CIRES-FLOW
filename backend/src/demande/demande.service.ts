@@ -154,6 +154,17 @@ export class DemandeService {
       );
     }
 
+    if (dto.statut === StatutDemande.ANNULE) {
+      const isOwner = demande.demandeurId === user.userId;
+      const isAdmin = user.role === Role.ADMIN;
+
+      if (!isOwner && !isAdmin) {
+        throw new ForbiddenException(
+          'Seul le demandeur ou un Admin peut annuler cette demande',
+        );
+      }
+    }
+
     const data: Prisma.DemandeUpdateInput = { statut: dto.statut };
 
     if (dto.statut === StatutDemande.CLOTURE) {
