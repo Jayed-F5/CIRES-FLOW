@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { DemandeService } from './demande.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
+import { UpdateStatutDto } from './dto/update-statut.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('demande')
@@ -24,5 +25,15 @@ export class DemandeController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.demandeService.findOne(id, req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put(':id/statut')
+  updateStatut(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateStatutDto,
+    @Req() req: any,
+  ) {
+    return this.demandeService.updateStatut(id, dto, req.user);
   }
 }

@@ -1,14 +1,25 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, Role, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
+import { UpdateStatutDto } from './dto/update-statut.dto';
 
 interface CurrentUser {
   userId: number;
   role: Role;
   departementId: number | null;
 }
+
+const TRANSITIONS: Record<StatutDemande, StatutDemande[]> = {
+  NOUVEAU: [StatutDemande.EN_ATTENTE_APPROBATION, StatutDemande.EN_COURS, StatutDemande.ANNULE],
+  EN_ATTENTE_APPROBATION: [StatutDemande.EN_COURS, StatutDemande.REJETE, StatutDemande.ANNULE],
+  EN_COURS: [StatutDemande.RESOLU],
+  RESOLU: [StatutDemande.CLOTURE],
+  CLOTURE: [],
+  REJETE: [],
+  ANNULE: [],
+};
 
 @Injectable()
 export class DemandeService {
@@ -59,7 +70,6 @@ export class DemandeService {
       return { departementId: user.departementId ?? -1 };
     }
 
-    // MANAGER / ADMIN — broader access, no restriction
     return {};
   }
 
@@ -131,5 +141,28 @@ export class DemandeService {
     }
 
     return demande;
+  }
+
+  async updateStatut(id: number, dto: UpdateStatutDto, user: CurrentUser) {
+    const demande = await this.findOne(id, user);
+
+    const allowedNextStatuts = TRANSITIONS[demande.statut];
+
+    if (!allowedNextStatuts.includes(dto.statut)) {
+      throw new BadRequestException(
+        `Transition invalide : impossible de passer de ${demande.statut} à ${dto.statut}`,
+      );
+    }
+
+    const data: Prisma.DemandeUpdateInput = { statut: dto.statut };
+
+    if (dto.statut === StatutDemande.CLOTURE) {
+      data.dateCloture = new Date();
+    }
+
+    return this.prisma.demande.update({
+      where: { id },
+      data,
+    });
   }
 }
