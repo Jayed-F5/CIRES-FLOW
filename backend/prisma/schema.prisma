@@ -121,6 +121,11 @@ model Demande {
   historique    HistoriqueAction[]
   approbations  Approbation[]
 
+  @@index([departementId])
+  @@index([categorieId])
+  @@index([demandeurId])
+  @@index([statut])
+  @@index([priorite])
   @@map("demandes")
 }
 
