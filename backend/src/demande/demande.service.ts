@@ -48,7 +48,16 @@ export class DemandeService {
       );
     }
 
-    return this.prisma.demande.create({
+    const premiereEtape = await this.prisma.workflowEtape.findFirst({
+      where: { categorieId: dto.categorieId },
+      orderBy: { ordre: 'asc' },
+    });
+
+    const statutInitial = premiereEtape
+      ? StatutDemande.EN_ATTENTE_APPROBATION
+      : StatutDemande.EN_COURS;
+
+    const demande = await this.prisma.demande.create({
       data: {
         titre: dto.titre,
         description: dto.description,
@@ -57,8 +66,21 @@ export class DemandeService {
         categorieId: dto.categorieId,
         demandeurId,
         metadata: dto.metadata,
+        statut: statutInitial,
       },
     });
+
+    if (premiereEtape) {
+      await this.prisma.approbation.create({
+        data: {
+          demandeId: demande.id,
+          etapeId: premiereEtape.id,
+          statut: 'EN_ATTENTE',
+        },
+      });
+    }
+
+    return demande;
   }
 
   private buildScopeFilter(user: CurrentUser): Prisma.DemandeWhereInput {
