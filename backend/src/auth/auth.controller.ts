@@ -3,7 +3,6 @@ import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
@@ -24,9 +23,10 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  @Post('refresh')
-  refresh(@Body() dto: RefreshTokenDto) {
-    return this.authService.refreshAccessToken(dto);
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  logout() {
+    return { message: 'Déconnexion réussie' };
   }
 
   @UseGuards(JwtAuthGuard)

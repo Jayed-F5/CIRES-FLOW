@@ -12,7 +12,7 @@ import type { StringValue } from 'ms';
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET,
       signOptions: {
-        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN ?? '15m') as StringValue,
+        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN ?? '8h') as StringValue,
       },
     }),
   ],
