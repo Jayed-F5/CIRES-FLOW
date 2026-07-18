@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CategorieService } from './categorie.service';
 import { CreateCategorieDto } from './dto/create-categorie.dto';
@@ -35,5 +35,12 @@ export class CategorieController {
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCategorieDto) {
     return this.categorieService.update(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.categorieService.remove(id);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategorieDto } from './dto/create-categorie.dto';
 import { UpdateCategorieDto } from './dto/update-categorie.dto';
@@ -61,6 +61,24 @@ export class CategorieService {
     return this.prisma.categorie.update({
       where: { id },
       data: dto,
+    });
+  }
+
+  async remove(id: number) {
+    await this.findOne(id);
+
+    const demandesCount = await this.prisma.demande.count({
+      where: { categorieId: id },
+    });
+
+    if (demandesCount > 0) {
+      throw new ConflictException(
+        'Impossible de supprimer cette catégorie : des demandes y sont rattachées',
+      );
+    }
+
+    return this.prisma.categorie.delete({
+      where: { id },
     });
   }
 }

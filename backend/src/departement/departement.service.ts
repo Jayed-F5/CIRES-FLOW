@@ -47,4 +47,32 @@ export class DepartementService {
       data: dto,
     });
   }
+
+  async remove(id: number) {
+    await this.findOne(id);
+
+    const categoriesCount = await this.prisma.categorie.count({
+      where: { departementId: id },
+    });
+
+    if (categoriesCount > 0) {
+      throw new ConflictException(
+        'Impossible de supprimer ce département : des catégories y sont rattachées',
+      );
+    }
+
+    const demandesCount = await this.prisma.demande.count({
+      where: { departementId: id },
+    });
+
+    if (demandesCount > 0) {
+      throw new ConflictException(
+        'Impossible de supprimer ce département : des demandes y sont rattachées',
+      );
+    }
+
+    return this.prisma.departement.delete({
+      where: { id },
+    });
+  }
 }
