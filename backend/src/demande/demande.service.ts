@@ -1,8 +1,14 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
+
+interface CurrentUser {
+  userId: number;
+  role: Role;
+  departementId: number | null;
+}
 
 @Injectable()
 export class DemandeService {
@@ -44,12 +50,27 @@ export class DemandeService {
     });
   }
 
-  async findAll(query: QueryDemandeDto) {
+  private buildScopeFilter(user: CurrentUser): Prisma.DemandeWhereInput {
+    if (user.role === Role.EMPLOYE) {
+      return { demandeurId: user.userId };
+    }
+
+    if (user.role === Role.AGENT) {
+      return { departementId: user.departementId ?? -1 };
+    }
+
+    // MANAGER / ADMIN — broader access, no restriction
+    return {};
+  }
+
+  async findAll(query: QueryDemandeDto, user: CurrentUser) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.DemandeWhereInput = {};
+    const where: Prisma.DemandeWhereInput = {
+      ...this.buildScopeFilter(user),
+    };
 
     if (query.departementId) {
       where.departementId = query.departementId;
@@ -90,5 +111,25 @@ export class DemandeService {
       page,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async findOne(id: number, user: CurrentUser) {
+    const demande = await this.prisma.demande.findUnique({
+      where: { id },
+    });
+
+    if (!demande) {
+      throw new NotFoundException('Demande non trouvée');
+    }
+
+    if (user.role === Role.EMPLOYE && demande.demandeurId !== user.userId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
+    }
+
+    if (user.role === Role.AGENT && demande.departementId !== user.departementId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
+    }
+
+    return demande;
   }
 }

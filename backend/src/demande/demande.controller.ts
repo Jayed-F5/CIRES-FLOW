@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { DemandeService } from './demande.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
@@ -16,7 +16,13 @@ export class DemandeController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Query() query: QueryDemandeDto) {
-    return this.demandeService.findAll(query);
+  findAll(@Query() query: QueryDemandeDto, @Req() req: any) {
+    return this.demandeService.findAll(query, req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.demandeService.findOne(id, req.user);
   }
 }
