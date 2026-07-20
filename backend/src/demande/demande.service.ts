@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, StatutDemande } from '@prisma/client';
+import { Prisma, Priorite, Role, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
@@ -19,6 +19,13 @@ const TRANSITIONS: Record<StatutDemande, StatutDemande[]> = {
   CLOTURE: [],
   REJETE: [],
   ANNULE: [],
+};
+
+const PRIORITE_MULTIPLIER: Record<Priorite, number> = {
+  URGENTE: 0.5,
+  HAUTE: 0.75,
+  NORMALE: 1,
+  BASSE: 1.5,
 };
 
 @Injectable()
@@ -57,6 +64,9 @@ export class DemandeService {
       ? StatutDemande.EN_ATTENTE_APPROBATION
       : StatutDemande.EN_COURS;
 
+    const heuresAjustees = categorie.delaiResolution * PRIORITE_MULTIPLIER[dto.priorite];
+    const dateLimiteSLA = new Date(Date.now() + heuresAjustees * 60 * 60 * 1000);
+
     const demande = await this.prisma.demande.create({
       data: {
         titre: dto.titre,
@@ -67,6 +77,7 @@ export class DemandeService {
         demandeurId,
         metadata: dto.metadata,
         statut: statutInitial,
+        dateLimiteSLA,
       },
     });
 
