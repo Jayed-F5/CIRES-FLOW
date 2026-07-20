@@ -10,6 +10,7 @@ import { DemandeModule } from './demande/demande.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { SlaModule } from './sla/sla.module';
 import { CommentaireModule } from './commentaire/commentaire.module';
+import { PieceJointeModule } from './piece-jointe/piece-jointe.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CommentaireModule } from './commentaire/commentaire.module';
     WorkflowModule,
     SlaModule,
     CommentaireModule,
+    PieceJointeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
