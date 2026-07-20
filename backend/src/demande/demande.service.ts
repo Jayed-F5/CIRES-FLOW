@@ -28,6 +28,34 @@ const PRIORITE_MULTIPLIER: Record<Priorite, number> = {
   BASSE: 1.5,
 };
 
+const STATUTS_FERMES: StatutDemande[] = [
+  StatutDemande.CLOTURE,
+  StatutDemande.REJETE,
+  StatutDemande.ANNULE,
+];
+
+function calculerIndicateurSLA(demande: {
+  statut: StatutDemande;
+  dateLimiteSLA: Date | null;
+}): 'RESPECTE' | 'A_RISQUE' | 'DEPASSE' | 'NON_APPLICABLE' {
+  if (!demande.dateLimiteSLA || STATUTS_FERMES.includes(demande.statut)) {
+    return 'NON_APPLICABLE';
+  }
+
+  const now = new Date();
+  const seuilRisque = new Date(now.getTime() + 60 * 60 * 1000);
+
+  if (demande.dateLimiteSLA < now) {
+    return 'DEPASSE';
+  }
+
+  if (demande.dateLimiteSLA < seuilRisque) {
+    return 'A_RISQUE';
+  }
+
+  return 'RESPECTE';
+}
+
 @Injectable()
 export class DemandeService {
   constructor(private prisma: PrismaService) {}
@@ -91,7 +119,7 @@ export class DemandeService {
       });
     }
 
-    return demande;
+    return { ...demande, indicateurSLA: calculerIndicateurSLA(demande) };
   }
 
   private buildScopeFilter(user: CurrentUser): Prisma.DemandeWhereInput {
@@ -149,7 +177,7 @@ export class DemandeService {
     ]);
 
     return {
-      data: demandes,
+      data: demandes.map((d) => ({ ...d, indicateurSLA: calculerIndicateurSLA(d) })),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -173,7 +201,7 @@ export class DemandeService {
       throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
     }
 
-    return demande;
+    return { ...demande, indicateurSLA: calculerIndicateurSLA(demande) };
   }
 
   async updateStatut(id: number, dto: UpdateStatutDto, user: CurrentUser) {
@@ -204,9 +232,11 @@ export class DemandeService {
       data.dateCloture = new Date();
     }
 
-    return this.prisma.demande.update({
+    const updated = await this.prisma.demande.update({
       where: { id },
       data,
     });
+
+    return { ...updated, indicateurSLA: calculerIndicateurSLA(updated) };
   }
 }
