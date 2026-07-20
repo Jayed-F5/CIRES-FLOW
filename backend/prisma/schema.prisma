@@ -116,6 +116,9 @@ model Demande {
   dateLimiteSLA DateTime?
   metadata      Json?
 
+  alerteRisqueEnvoyee   Boolean @default(false)
+  alerteDepasseEnvoyee  Boolean @default(false)
+
   commentaires  Commentaire[]
   piecesJointes PieceJointe[]
   historique    HistoriqueAction[]
