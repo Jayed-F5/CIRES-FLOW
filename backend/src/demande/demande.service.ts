@@ -92,8 +92,13 @@ export class DemandeService {
       ? StatutDemande.EN_ATTENTE_APPROBATION
       : StatutDemande.EN_COURS;
 
-    const heuresAjustees = categorie.delaiResolution * PRIORITE_MULTIPLIER[dto.priorite];
-    const dateLimiteSLA = new Date(Date.now() + heuresAjustees * 60 * 60 * 1000);
+    const multiplicateur = PRIORITE_MULTIPLIER[dto.priorite];
+    const dateLimiteSLA = new Date(
+      Date.now() + categorie.delaiResolution * multiplicateur * 60 * 60 * 1000,
+    );
+    const dateLimiteReponse = new Date(
+      Date.now() + categorie.delaiReponse * multiplicateur * 60 * 60 * 1000,
+    );
 
     const demande = await this.prisma.demande.create({
       data: {
@@ -106,6 +111,7 @@ export class DemandeService {
         metadata: dto.metadata,
         statut: statutInitial,
         dateLimiteSLA,
+        dateLimiteReponse,
       },
     });
 

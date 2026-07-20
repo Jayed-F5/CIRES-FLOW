@@ -114,10 +114,14 @@ model Demande {
   dateCreation  DateTime  @default(now())
   dateCloture   DateTime?
   dateLimiteSLA DateTime?
+  dateLimiteReponse DateTime?
+  dateReponse       DateTime?
   metadata      Json?
 
   alerteRisqueEnvoyee   Boolean @default(false)
   alerteDepasseEnvoyee  Boolean @default(false)
+  alerteReponseRisqueEnvoyee  Boolean @default(false)
+  alerteReponseDepasseEnvoyee Boolean @default(false)
 
   commentaires  Commentaire[]
   piecesJointes PieceJointe[]

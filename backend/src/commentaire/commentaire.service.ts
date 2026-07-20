@@ -47,6 +47,14 @@ export class CommentaireService {
       },
     });
 
+    if (!demande.dateReponse) {
+      await this.prisma.demande.update({
+        where: { id: demandeId },
+        data: { dateReponse: new Date() },
+      });
+      this.logger.log(`[SLA RÉPONSE] Première réponse enregistrée pour la demande #${demandeId}`);
+    }
+
     if (dto.visibilite === VisibiliteCommentaire.PUBLIC && demande.demandeurId !== user.userId) {
       this.logger.log(
         `[NOTIFICATION] Utilisateur #${demande.demandeurId} : nouveau commentaire public sur votre demande #${demandeId}`,
