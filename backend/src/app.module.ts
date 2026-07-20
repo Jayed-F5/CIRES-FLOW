@@ -9,6 +9,7 @@ import { CategorieModule } from './categorie/categorie.module';
 import { DemandeModule } from './demande/demande.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { SlaModule } from './sla/sla.module';
+import { CommentaireModule } from './commentaire/commentaire.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SlaModule } from './sla/sla.module';
     DemandeModule,
     WorkflowModule,
     SlaModule,
+    CommentaireModule,
   ],
   controllers: [AppController],
   providers: [AppService],
