@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nest
 import { Role, VisibiliteCommentaire } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { HistoriqueService } from '../historique/historique.service';
+import { NotificationService } from '../notification/notification.service';
 import { CreateCommentaireDto } from './dto/create-commentaire.dto';
 
 interface CurrentUser {
@@ -17,6 +18,7 @@ export class CommentaireService {
   constructor(
     private prisma: PrismaService,
     private historiqueService: HistoriqueService,
+    private notificationService: NotificationService,
   ) {}
 
   async create(demandeId: number, dto: CreateCommentaireDto, user: CurrentUser) {
@@ -66,14 +68,18 @@ export class CommentaireService {
     }
 
     if (dto.visibilite === VisibiliteCommentaire.PUBLIC && demande.demandeurId !== user.userId) {
-      this.logger.log(
-        `[NOTIFICATION] Utilisateur #${demande.demandeurId} : nouveau commentaire public sur votre demande #${demandeId}`,
+      await this.notificationService.notify(
+        demande.demandeurId,
+        `Nouveau commentaire public sur votre demande #${demandeId} : "${demande.titre}"`,
+        `/demande/${demandeId}`,
       );
     }
 
     if (demande.agentId && demande.agentId !== user.userId) {
-      this.logger.log(
-        `[NOTIFICATION] Agent #${demande.agentId} : nouveau commentaire (${dto.visibilite}) sur la demande #${demandeId}`,
+      await this.notificationService.notify(
+        demande.agentId,
+        `Nouveau commentaire (${dto.visibilite}) sur la demande #${demandeId} : "${demande.titre}"`,
+        `/demande/${demandeId}`,
       );
     }
 

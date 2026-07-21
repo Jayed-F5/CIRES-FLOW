@@ -12,6 +12,7 @@ import { SlaModule } from './sla/sla.module';
 import { CommentaireModule } from './commentaire/commentaire.module';
 import { PieceJointeModule } from './piece-jointe/piece-jointe.module';
 import { HistoriqueModule } from './historique/historique.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { HistoriqueModule } from './historique/historique.module';
     CommentaireModule,
     PieceJointeModule,
     HistoriqueModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
