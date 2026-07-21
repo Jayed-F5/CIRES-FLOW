@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role, StatutApprobation, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { HistoriqueService } from '../historique/historique.service';
 import { CreateEtapeDto } from './dto/create-etape.dto';
 import { DecideApprobationDto } from './dto/decide-approbation.dto';
 
@@ -12,7 +13,10 @@ interface CurrentUser {
 
 @Injectable()
 export class WorkflowService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private historiqueService: HistoriqueService,
+  ) {}
 
   async createEtape(dto: CreateEtapeDto) {
     const categorie = await this.prisma.categorie.findUnique({
@@ -84,11 +88,25 @@ export class WorkflowService {
       },
     });
 
+    await this.historiqueService.logAction(
+      approbation.demandeId,
+      user.userId,
+      `APPROBATION:etape_${approbation.etape.ordre}:${dto.statut}`,
+    );
+
     if (dto.statut === StatutApprobation.REJETE) {
-      return this.prisma.demande.update({
+      const demande = await this.prisma.demande.update({
         where: { id: approbation.demandeId },
         data: { statut: StatutDemande.REJETE },
       });
+
+      await this.historiqueService.logAction(
+        approbation.demandeId,
+        user.userId,
+        `CHANGEMENT_STATUT:${approbation.demande.statut}->REJETE`,
+      );
+
+      return demande;
     }
 
     const prochaineEtape = await this.prisma.workflowEtape.findFirst({
@@ -111,9 +129,17 @@ export class WorkflowService {
       return this.prisma.demande.findUnique({ where: { id: approbation.demandeId } });
     }
 
-    return this.prisma.demande.update({
+    const demande = await this.prisma.demande.update({
       where: { id: approbation.demandeId },
       data: { statut: StatutDemande.EN_COURS },
     });
+
+    await this.historiqueService.logAction(
+      approbation.demandeId,
+      user.userId,
+      `CHANGEMENT_STATUT:${approbation.demande.statut}->EN_COURS`,
+    );
+
+    return demande;
   }
 }

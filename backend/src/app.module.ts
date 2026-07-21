@@ -11,6 +11,7 @@ import { WorkflowModule } from './workflow/workflow.module';
 import { SlaModule } from './sla/sla.module';
 import { CommentaireModule } from './commentaire/commentaire.module';
 import { PieceJointeModule } from './piece-jointe/piece-jointe.module';
+import { HistoriqueModule } from './historique/historique.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PieceJointeModule } from './piece-jointe/piece-jointe.module';
     SlaModule,
     CommentaireModule,
     PieceJointeModule,
+    HistoriqueModule,
   ],
   controllers: [AppController],
   providers: [AppService],

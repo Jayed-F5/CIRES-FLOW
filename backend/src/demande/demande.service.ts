@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Priorite, Role, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { HistoriqueService } from '../historique/historique.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
 import { UpdateStatutDto } from './dto/update-statut.dto';
@@ -58,7 +59,10 @@ function calculerIndicateurSLA(demande: {
 
 @Injectable()
 export class DemandeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private historiqueService: HistoriqueService,
+  ) {}
 
   async create(dto: CreateDemandeDto, demandeurId: number) {
     const departement = await this.prisma.departement.findUnique({
@@ -124,6 +128,8 @@ export class DemandeService {
         },
       });
     }
+
+    await this.historiqueService.logAction(demande.id, demandeurId, 'CREATION');
 
     return { ...demande, indicateurSLA: calculerIndicateurSLA(demande) };
   }
@@ -242,6 +248,12 @@ export class DemandeService {
       where: { id },
       data,
     });
+
+    await this.historiqueService.logAction(
+      id,
+      user.userId,
+      `CHANGEMENT_STATUT:${demande.statut}->${dto.statut}`,
+    );
 
     return { ...updated, indicateurSLA: calculerIndicateurSLA(updated) };
   }
