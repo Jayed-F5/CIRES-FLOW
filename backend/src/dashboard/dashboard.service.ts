@@ -1,30 +1,48 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
+
+interface CurrentUser {
+  userId: number;
+  role: Role;
+  departementId: number | null;
+}
 
 @Injectable()
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
-  async getStatsGlobales(departementId?: number) {
-    const where = departementId ? { departementId } : {};
+  private buildScopeWhere(user: CurrentUser): Record<string, any> {
+    if (user.role === Role.EMPLOYE) {
+      return { demandeurId: user.userId };
+    }
+    if (user.role === Role.AGENT || user.role === Role.MANAGER) {
+      return { departementId: user.departementId };
+    }
+    // ADMIN — pas de restriction
+    return {};
+  }
+
+  async getStatsGlobales(user: CurrentUser) {
+    const scopeWhere = this.buildScopeWhere(user);
 
     const [parStatut, parCategorie, parDepartement, total] = await Promise.all([
       this.prisma.demande.groupBy({
         by: ['statut'],
-        where,
+        where: scopeWhere,
         _count: { _all: true },
       }),
       this.prisma.demande.groupBy({
         by: ['categorieId'],
-        where,
+        where: scopeWhere,
         _count: { _all: true },
       }),
       this.prisma.demande.groupBy({
         by: ['departementId'],
-        where: departementId ? { departementId } : {},
+        where: scopeWhere,
         _count: { _all: true },
       }),
-      this.prisma.demande.count({ where }),
+      this.prisma.demande.count({ where: scopeWhere }),
     ]);
 
     const categorieIds = parCategorie.map((c) => c.categorieId);
@@ -60,9 +78,9 @@ export class DashboardService {
     };
   }
 
-  async getPerformanceStats(departementId?: number) {
-    const baseWhere: any = { statut: { not: 'ANNULE' } };
-    if (departementId) baseWhere.departementId = departementId;
+  async getPerformanceStats(user: CurrentUser) {
+    const scopeWhere = this.buildScopeWhere(user);
+    const baseWhere: any = { ...scopeWhere, statut: { not: 'ANNULE' } };
 
     const demandesCloturees = await this.prisma.demande.findMany({
       where: { ...baseWhere, dateCloture: { not: null } },
