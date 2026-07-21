@@ -13,4 +13,10 @@ export class DashboardController {
     const deptId = query.departementId ? parseInt(query.departementId, 10) : undefined;
     return this.dashboardService.getStatsGlobales(deptId);
   }
+
+  @Get('performance')
+  async getPerformance(@Query() query: GetStatsQueryDto) {
+    const deptId = query.departementId ? parseInt(query.departementId, 10) : undefined;
+    return this.dashboardService.getPerformanceStats(deptId);
+  }
 }
