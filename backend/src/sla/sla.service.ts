@@ -2,12 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class SlaService {
   private readonly logger = new Logger(SlaService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
   async checkSlaDeadlines() {
@@ -29,17 +33,27 @@ export class SlaService {
         const estARisque = !estDepassee && demande.dateLimiteSLA < seuilRisque;
 
         if (estDepassee && !demande.alerteDepasseEnvoyee) {
-          this.logger.warn(
-            `[SLA DÉPASSÉ] Demande #${demande.id} "${demande.titre}" — limite était ${demande.dateLimiteSLA.toISOString()}`,
+          this.logger.warn(`[SLA DÉPASSÉ] Demande #${demande.id} "${demande.titre}"`);
+
+          await this.notificationService.notify(
+            demande.demandeurId,
+            `Votre demande #${demande.id} "${demande.titre}" a dépassé le délai de résolution prévu`,
+            `/demande/${demande.id}`,
           );
+
           await this.prisma.demande.update({
             where: { id: demande.id },
             data: { alerteDepasseEnvoyee: true },
           });
         } else if (estARisque && !demande.alerteRisqueEnvoyee) {
-          this.logger.warn(
-            `[SLA À RISQUE] Demande #${demande.id} "${demande.titre}" — limite dans moins d'1h (${demande.dateLimiteSLA.toISOString()})`,
+          this.logger.warn(`[SLA À RISQUE] Demande #${demande.id} "${demande.titre}"`);
+
+          await this.notificationService.notify(
+            demande.demandeurId,
+            `Votre demande #${demande.id} "${demande.titre}" approche de son délai de résolution (moins d'1h restante)`,
+            `/demande/${demande.id}`,
           );
+
           await this.prisma.demande.update({
             where: { id: demande.id },
             data: { alerteRisqueEnvoyee: true },
@@ -53,17 +67,27 @@ export class SlaService {
         const estARisque = !estDepassee && demande.dateLimiteReponse < seuilRisque;
 
         if (estDepassee && !demande.alerteReponseDepasseEnvoyee) {
-          this.logger.warn(
-            `[SLA RÉPONSE DÉPASSÉ] Demande #${demande.id} "${demande.titre}" — aucune réponse depuis ${demande.dateLimiteReponse.toISOString()}`,
+          this.logger.warn(`[SLA RÉPONSE DÉPASSÉ] Demande #${demande.id} "${demande.titre}"`);
+
+          await this.notificationService.notify(
+            demande.demandeurId,
+            `Votre demande #${demande.id} "${demande.titre}" n'a toujours pas reçu de réponse`,
+            `/demande/${demande.id}`,
           );
+
           await this.prisma.demande.update({
             where: { id: demande.id },
             data: { alerteReponseDepasseEnvoyee: true },
           });
         } else if (estARisque && !demande.alerteReponseRisqueEnvoyee) {
-          this.logger.warn(
-            `[SLA RÉPONSE À RISQUE] Demande #${demande.id} "${demande.titre}" — réponse attendue dans moins d'1h (${demande.dateLimiteReponse.toISOString()})`,
+          this.logger.warn(`[SLA RÉPONSE À RISQUE] Demande #${demande.id} "${demande.titre}"`);
+
+          await this.notificationService.notify(
+            demande.demandeurId,
+            `Votre demande #${demande.id} "${demande.titre}" attend une première réponse (moins d'1h restante)`,
+            `/demande/${demande.id}`,
           );
+
           await this.prisma.demande.update({
             where: { id: demande.id },
             data: { alerteReponseRisqueEnvoyee: true },
