@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Role, VisibiliteCommentaire } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { HistoriqueService } from '../historique/historique.service';
 import { CreateCommentaireDto } from './dto/create-commentaire.dto';
 
 interface CurrentUser {
@@ -13,7 +14,10 @@ interface CurrentUser {
 export class CommentaireService {
   private readonly logger = new Logger(CommentaireService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private historiqueService: HistoriqueService,
+  ) {}
 
   async create(demandeId: number, dto: CreateCommentaireDto, user: CurrentUser) {
     const demande = await this.prisma.demande.findUnique({
@@ -46,6 +50,12 @@ export class CommentaireService {
         visibilite: dto.visibilite,
       },
     });
+
+    await this.historiqueService.logAction(
+      demandeId,
+      user.userId,
+      `COMMENTAIRE:${dto.visibilite}`,
+    );
 
     if (!demande.dateReponse) {
       await this.prisma.demande.update({

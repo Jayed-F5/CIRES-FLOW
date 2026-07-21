@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { HistoriqueService } from '../historique/historique.service';
 
 interface CurrentUser {
   userId: number;
@@ -10,7 +11,10 @@ interface CurrentUser {
 
 @Injectable()
 export class PieceJointeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private historiqueService: HistoriqueService,
+  ) {}
 
   private async checkAccesDemande(demandeId: number, user: CurrentUser) {
     const demande = await this.prisma.demande.findUnique({
@@ -35,13 +39,21 @@ export class PieceJointeService {
   async create(demandeId: number, nomFichier: string, cheminFichier: string, user: CurrentUser) {
     await this.checkAccesDemande(demandeId, user);
 
-    return this.prisma.pieceJointe.create({
+    const piece = await this.prisma.pieceJointe.create({
       data: {
         demandeId,
         nomFichier,
         cheminFichier,
       },
     });
+
+    await this.historiqueService.logAction(
+      demandeId,
+      user.userId,
+      `PIECE_JOINTE:${nomFichier}`,
+    );
+
+    return piece;
   }
 
   async findByDemande(demandeId: number, user: CurrentUser) {
