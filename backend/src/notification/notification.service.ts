@@ -2,13 +2,17 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from './notification.gateway';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
   private readonly logger = new Logger(NotificationService.name);
   private transporter!: nodemailer.Transporter;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationGateway: NotificationGateway,
+  ) {}
 
   async onModuleInit() {
     const testAccount = await nodemailer.createTestAccount();
@@ -58,6 +62,8 @@ export class NotificationService implements OnModuleInit {
     if (user) {
       await this.sendEmail(user.email, 'Nouvelle notification - Cires Flow', message);
     }
+
+    this.notificationGateway.sendToUser(utilisateurId, 'notification', notification);
 
     return notification;
   }
