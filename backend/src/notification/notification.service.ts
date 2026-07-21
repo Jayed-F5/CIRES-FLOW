@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -59,6 +60,16 @@ export class NotificationService implements OnModuleInit {
     }
 
     return notification;
+  }
+
+  async notifyByRole(role: Role, departementId: number, message: string, lien?: string) {
+    const users = await this.prisma.utilisateur.findMany({
+      where: { role, departementId },
+    });
+
+    for (const user of users) {
+      await this.notify(user.id, message, lien);
+    }
   }
 
   async findMine(utilisateurId: number) {

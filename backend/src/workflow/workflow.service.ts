@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { Role, StatutApprobation, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { HistoriqueService } from '../historique/historique.service';
+import { NotificationService } from '../notification/notification.service';
 import { CreateEtapeDto } from './dto/create-etape.dto';
 import { DecideApprobationDto } from './dto/decide-approbation.dto';
 
@@ -16,6 +17,7 @@ export class WorkflowService {
   constructor(
     private prisma: PrismaService,
     private historiqueService: HistoriqueService,
+    private notificationService: NotificationService,
   ) {}
 
   async createEtape(dto: CreateEtapeDto) {
@@ -106,6 +108,12 @@ export class WorkflowService {
         `CHANGEMENT_STATUT:${approbation.demande.statut}->REJETE`,
       );
 
+      await this.notificationService.notify(
+        approbation.demande.demandeurId,
+        `Votre demande #${approbation.demandeId} "${approbation.demande.titre}" a été rejetée`,
+        `/demande/${approbation.demandeId}`,
+      );
+
       return demande;
     }
 
@@ -126,6 +134,13 @@ export class WorkflowService {
         },
       });
 
+      await this.notificationService.notifyByRole(
+        prochaineEtape.roleApprobateur,
+        approbation.demande.departementId,
+        `Une demande #${approbation.demandeId} "${approbation.demande.titre}" attend votre approbation`,
+        `/demande/${approbation.demandeId}`,
+      );
+
       return this.prisma.demande.findUnique({ where: { id: approbation.demandeId } });
     }
 
@@ -138,6 +153,12 @@ export class WorkflowService {
       approbation.demandeId,
       user.userId,
       `CHANGEMENT_STATUT:${approbation.demande.statut}->EN_COURS`,
+    );
+
+    await this.notificationService.notify(
+      approbation.demande.demandeurId,
+      `Votre demande #${approbation.demandeId} "${approbation.demande.titre}" est maintenant en cours de traitement`,
+      `/demande/${approbation.demandeId}`,
     );
 
     return demande;

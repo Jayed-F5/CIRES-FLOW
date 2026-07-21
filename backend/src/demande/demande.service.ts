@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { Prisma, Priorite, Role, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { HistoriqueService } from '../historique/historique.service';
+import { NotificationService } from '../notification/notification.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
 import { UpdateStatutDto } from './dto/update-statut.dto';
@@ -62,6 +63,7 @@ export class DemandeService {
   constructor(
     private prisma: PrismaService,
     private historiqueService: HistoriqueService,
+    private notificationService: NotificationService,
   ) {}
 
   async create(dto: CreateDemandeDto, demandeurId: number) {
@@ -127,9 +129,22 @@ export class DemandeService {
           statut: 'EN_ATTENTE',
         },
       });
+
+      await this.notificationService.notifyByRole(
+        premiereEtape.roleApprobateur,
+        demande.departementId,
+        `Une demande #${demande.id} "${demande.titre}" attend votre approbation`,
+        `/demande/${demande.id}`,
+      );
     }
 
     await this.historiqueService.logAction(demande.id, demandeurId, 'CREATION');
+
+    await this.notificationService.notify(
+      demandeurId,
+      `Votre demande #${demande.id} "${demande.titre}" a été créée avec succès`,
+      `/demande/${demande.id}`,
+    );
 
     return { ...demande, indicateurSLA: calculerIndicateurSLA(demande) };
   }
@@ -254,6 +269,14 @@ export class DemandeService {
       user.userId,
       `CHANGEMENT_STATUT:${demande.statut}->${dto.statut}`,
     );
+
+    if (demande.demandeurId !== user.userId) {
+      await this.notificationService.notify(
+        demande.demandeurId,
+        `Le statut de votre demande #${id} "${demande.titre}" est passé à ${dto.statut}`,
+        `/demande/${id}`,
+      );
+    }
 
     return { ...updated, indicateurSLA: calculerIndicateurSLA(updated) };
   }
