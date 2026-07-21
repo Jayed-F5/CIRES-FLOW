@@ -13,6 +13,7 @@ import { CommentaireModule } from './commentaire/commentaire.module';
 import { PieceJointeModule } from './piece-jointe/piece-jointe.module';
 import { HistoriqueModule } from './historique/historique.module';
 import { NotificationModule } from './notification/notification.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { NotificationModule } from './notification/notification.module';
     PieceJointeModule,
     HistoriqueModule,
     NotificationModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
