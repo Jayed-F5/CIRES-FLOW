@@ -1,0 +1,52 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+          <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
+          <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67" 
+                fill="none" 
+                stroke="#ffffff" 
+                stroke-width="3.6" 
+                stroke-linecap="round" 
+                stroke-linejoin="round" />
+        </svg>
+      </div>
+      <span class="logo-text">CIRES FLOW</span>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="input-group">
+        <span class="input-icon">
+          <svg lucideMail [size]="16"></svg>
+        </span>
+        <input type="email" formControlName="email" placeholder="Adresse email" />
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">
+          <svg lucideLock [size]="16"></svg>
+        </span>
+        <input type="password" formControlName="motDePasse" placeholder="Mot de passe" />
+      </div>
+
+      @if (errorMessage()) {
+        <p class="error-text">{{ errorMessage() }}</p>
+      }
+
+      <button type="submit" class="submit-btn" [disabled]="loading()">
+        @if (loading()) {
+          Connexion...
+        } @else {
+          <svg lucideLogIn [size]="16"></svg>
+          Se connecter
+        }
+      </button>
+    </form>
+
+    <hr />
+    <p class="footer-text">ACCÈS RÉSERVÉ AU PERSONNEL AUTORISÉ</p>
+  </div>
+
+  <p class="page-footer">© 2026 CIRES FLOW. TOUS DROITS RÉSERVÉS.</p>
+</div>

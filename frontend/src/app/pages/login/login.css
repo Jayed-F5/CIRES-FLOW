@@ -1,0 +1,157 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f6f8;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #e9f0f2;
+  border-radius: 12px;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0px;
+  margin: 0 auto 32px;
+  width: fit-content;
+}
+
+.logo-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  color: #031c2d;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa2ad;
+  display: flex;
+  align-items: center;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 14px 12px 38px;
+  border: 1px solid #e6eef2;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.input-group input:focus {
+  border-color: #ffaa01;
+}
+
+.error-text {
+  color: #d0402a;
+  font-size: 13px;
+  margin: -4px 0 12px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 13px;
+  background-color: #ffaa01;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: #e69700;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #eceef1;
+  margin: 24px 0 16px;
+}
+
+.footer-text {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #9aa2ad;
+  margin: 0;
+}
+
+.page-footer {
+  margin-top: 24px;
+  font-size: 12px;
+  color: #9aa2ad;
+  letter-spacing: 0.3px;
+}
+
+@media (max-width: 480px) {
+  .login-page {
+    padding: 16px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 28px 24px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .logo-text {
+    font-size: 24px;
+  }
+
+  .submit-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
