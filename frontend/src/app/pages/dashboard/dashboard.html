@@ -1,18 +1,116 @@
-<app-header />
+<div class="page-wrapper">
+  <app-header />
 
-<div class="dashboard-content">
-  @if (loading()) {
-    <p>Chargement...</p>
-  } @else if (error()) {
-    <p class="error-text">{{ error() }}</p>
-  } @else {
-    <h2>KPI</h2>
-    <pre>{{ kpi() | json }}</pre>
+  <div class="dashboard-content">
+    @if (loading()) {
+      <p class="status-text">Chargement...</p>
+    } @else if (error()) {
+      <p class="status-text error-text">{{ error() }}</p>
+    } @else {
+      <div class="page-header">
+        <h1>Tableau de Bord Analytique</h1>
+        <div class="header-actions">
+          <button class="export-btn">Exporter Excel</button>
+          <button class="export-btn">Exporter PDF</button>
+        </div>
+      </div>
 
-    <h2>Stats</h2>
-    <pre>{{ stats() | json }}</pre>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <svg lucideLayers [size]="18"></svg>
+            <span class="kpi-label">DEMANDES ACTIVES</span>
+          </div>
+          <span class="kpi-value">{{ kpi()?.demandesActives }}</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <svg lucideClock [size]="18"></svg>
+            <span class="kpi-label">EN ATTENTE D'APPROBATION</span>
+          </div>
+          <span class="kpi-value">{{ kpi()?.enAttenteApprobation }}</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <svg lucideTriangleAlert [size]="18" class="icon-danger"></svg>
+            <span class="kpi-label">SLA DÉPASSÉS</span>
+          </div>
+          <span class="kpi-value kpi-value-danger">{{ kpi()?.slaDepasses }}</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <svg lucideTimer [size]="18"></svg>
+            <span class="kpi-label">TEMPS MOYEN DE RÉSOLUTION</span>
+          </div>
+          <span class="kpi-value">
+            @if (performance()?.tempsMoyenResolutionHeures !== null) {
+              {{ (performance()!.tempsMoyenResolutionHeures! / 24) | number: '1.1-1' }} Jours
+            } @else {
+              —
+            }
+          </span>
+        </div>
+      </div>
 
-    <h2>Performance</h2>
-    <pre>{{ performance() | json }}</pre>
-  }
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Demandes par Statut</h3>
+            <span class="live-badge">Temps Réel</span>
+          </div>
+          <app-bar-chart [data]="barChartData()" />
+          <a class="detail-link" href="#">Consulter le rapport détaillé ›</a>
+        </div>
+
+        <div class="chart-card">
+  <div class="chart-card-header">
+    <h3>Respect des Engagements SLA</h3>
+  </div>
+
+  <div class="donut-center-wrapper">
+    <app-donut-chart
+      [respecte]="kpi()?.slaRespectees ?? 0"
+      [aRisque]="kpi()?.slaARisque ?? 0"
+      [depasse]="kpi()?.slaDepasses ?? 0"
+    />
+    <div class="donut-legend">
+      <div class="legend-item">
+        <div class="legend-top">
+          <span class="legend-dot" style="background:#2ecc71"></span>
+          <span class="legend-count">{{ kpi()?.slaRespectees }}</span>
+        </div>
+        <span class="legend-label">Respecté</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-top">
+          <span class="legend-dot" style="background:#f5a623"></span>
+          <span class="legend-count">{{ kpi()?.slaARisque }}</span>
+        </div>
+        <span class="legend-label">À risque</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-top">
+          <span class="legend-dot" style="background:#e74c3c"></span>
+          <span class="legend-count">{{ kpi()?.slaDepasses }}</span>
+        </div>
+        <span class="legend-label">Dépassé</span>
+      </div>
+    </div>
+  </div>
+</div>
+      </div>
+    }
+  </div>
+
+  <div class="dashboard-footer">
+  <div class="dashboard-footer">
+  <div class="dashboard-footer-inner">
+    <div class="footer-links">
+      <a href="#">Confidentialité</a>
+      <a href="#">Conditions d'utilisation</a>
+      <a href="#">Documentation API</a>
+    </div>
+    <span>© 2026 CIRES FLOW</span>
+  </div>
+</div>
 </div>

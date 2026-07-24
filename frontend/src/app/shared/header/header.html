@@ -1,17 +1,17 @@
 <header class="app-header">
   <div class="header-left">
     <a routerLink="/dashboard" class="logo-link">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
-    <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
-    <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="3.6" 
-          stroke-linecap="round" 
-          stroke-linejoin="round" />
-  </svg>
-  <span class="logo-text">CIRES FLOW</span>
-</a>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+        <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
+        <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67" 
+              fill="none" 
+              stroke="#ffffff" 
+              stroke-width="3.6" 
+              stroke-linecap="round" 
+              stroke-linejoin="round" />
+      </svg>
+      <span class="logo-text">CIRES FLOW</span>
+    </a>
   </div>
 
   <div class="header-right">
@@ -22,15 +22,32 @@
 
     <div class="divider"></div>
 
-    <div class="user-badge">
-      <div class="avatar">
-        {{ initials }}
-        <span class="status-dot"></span>
-      </div>
-      <div class="user-text">
-        <span class="user-name">{{ displayName }}</span>
-        <span class="user-role">{{ roleLabel }}</span>
-      </div>
+    <div class="user-menu-wrapper">
+      <button class="user-badge" (click)="toggleMenu()">
+        <div class="avatar">
+          {{ initials }}
+          <span class="status-dot"></span>
+        </div>
+        <div class="user-text">
+          <span class="user-name">{{ displayName }}</span>
+          <span class="user-role">{{ roleLabel }}</span>
+        </div>
+        <svg lucideChevronDown [size]="16" class="chevron"></svg>
+      </button>
+
+      @if (menuOpen()) {
+        <div class="dropdown-menu">
+          <a routerLink="/mon-compte" class="dropdown-item" (click)="closeMenu()">
+            <svg lucideUser [size]="16"></svg>
+            Mon Compte
+          </a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item dropdown-item-danger" (click)="logout()">
+            <svg lucideLogOut [size]="16"></svg>
+            Déconnexion
+          </button>
+        </div>
+      }
     </div>
   </div>
 </header>
