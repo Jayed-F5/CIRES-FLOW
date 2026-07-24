@@ -1,0 +1,112 @@
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    <div class="greeting-card">
+      <div>
+        <h1>Bonjour, {{ greetingName }}</h1>
+        <p class="subtitle">Gérez vos demandes et suivez leur progression en temps réel.</p>
+      </div>
+      <a routerLink="/creer-demande" class="new-btn">+ NOUVELLE DEMANDE</a>
+    </div>
+
+    <div class="filters-row">
+  <div class="search-wrapper">
+    <svg lucideSearch [size]="16" class="search-icon"></svg>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Rechercher une demande..."
+      [value]="searchTerm()"
+      (input)="onSearchInput($any($event.target).value)"
+    />
+  </div>
+  <select class="filter-select" [value]="selectedStatut()" (change)="onStatutChange($any($event.target).value)">
+    @for (opt of statutOptions; track opt.value) {
+      <option [value]="opt.value">{{ opt.label }}</option>
+    }
+  </select>
+  @if (isAdmin()) {
+    <select class="filter-select" [value]="selectedDepartementId()" (change)="onDepartementChange($any($event.target).value)">
+      <option value="">Tous les Départements</option>
+      @for (dept of departements(); track dept.id) {
+        <option [value]="dept.id">{{ dept.nom }}</option>
+      }
+    </select>
+  }
+  <select
+  class="filter-select"
+  [value]="selectedCategorieId()"
+  (change)="onCategorieChange($any($event.target).value)"
+  [disabled]="isAdmin() && !selectedDepartementId()"
+>
+  <option value="">Toutes les Catégories</option>
+  @for (cat of filteredCategories(); track cat.id) {
+    <option [value]="cat.id">{{ cat.nom }}</option>
+  }
+</select>
+</div>
+
+    <div class="table-card">
+      @if (loading()) {
+        <p class="status-text">Chargement...</p>
+      } @else if (error()) {
+        <p class="status-text error-text">{{ error() }}</p>
+      } @else if (demandes().length === 0) {
+        <p class="status-text">Aucune demande trouvée.</p>
+      } @else {
+        <table class="demandes-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Titre</th>
+              <th>Catégorie</th>
+              <th>Date de création</th>
+              <th>Statut</th>
+              <th>Indicateur SLA</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (demande of demandes(); track demande.id) {
+              <tr>
+                <td class="id-cell">DEM-{{ demande.id.toString().padStart(3, '0') }}</td>
+                <td>{{ demande.titre }}</td>
+                <td>{{ categorieName(demande.categorieId) }}</td>
+                <td>{{ formatDate(demande.dateCreation) }}</td>
+                <td>
+                  <span class="status-badge" [class]="'status-' + demande.statut">
+                    {{ statutLabels[demande.statut] }}
+                  </span>
+                </td>
+                <td>
+                  <span class="sla-badge" [class]="'sla-' + demande.indicateurSLA">
+                    {{ slaLabels[demande.indicateurSLA] }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <button (click)="prevPage()" [disabled]="page() === 1">‹ Précédent</button>
+          @for (n of pageNumbers(); track n) {
+            <button class="page-num" [class.active]="n === page()" (click)="goToPage(n)">{{ n }}</button>
+          }
+          <button (click)="nextPage()" [disabled]="page() === totalPages()">Suivant ›</button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+      <div class="footer-links">
+        <a href="#">Support Technique</a>
+        <a href="#">Conditions d'utilisation</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+    </div>
+  </div>
+</div>
