@@ -1,0 +1,113 @@
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    <a routerLink="/mes-demandes" class="back-link">‹ Retour au tableau de bord</a>
+    <h1>Créer une nouvelle demande</h1>
+
+    <div class="form-card">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <label>Titre de la demande</label>
+          <input type="text" formControlName="titre" placeholder="Ex: Problème d'accès au VPN" />
+          @if (form.get('titre')?.invalid && form.get('titre')?.touched) {
+            <span class="field-error">Le titre doit contenir au moins 3 caractères</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Département</label>
+            <select formControlName="departementId" (change)="onDepartementChange($any($event.target).value)">
+              <option value="">Sélectionner le département</option>
+              @for (dept of departements(); track dept.id) {
+                <option [value]="dept.id">{{ dept.nom }}</option>
+              }
+            </select>
+            @if (form.get('departementId')?.invalid && form.get('departementId')?.touched) {
+              <span class="field-error">Veuillez sélectionner un département</span>
+            }
+          </div>
+
+          <div class="field">
+            <label>Catégorie</label>
+            <select formControlName="categorieId">
+              <option value="">Sélectionner une catégorie</option>
+              @for (cat of filteredCategories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.nom }}</option>
+              }
+            </select>
+            @if (form.get('categorieId')?.invalid && form.get('categorieId')?.touched) {
+              <span class="field-error">Veuillez sélectionner une catégorie</span>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Priorité</label>
+          <select formControlName="priorite">
+            @for (opt of prioriteOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <textarea formControlName="description" rows="5" placeholder="Veuillez détailler votre problème..."></textarea>
+          @if (form.get('description')?.invalid && form.get('description')?.touched) {
+            <span class="field-error">La description doit contenir au moins 10 caractères</span>
+          }
+        </div>
+
+        <div class="field">
+          <label>Fichiers</label>
+          <div
+            class="dropzone"
+            [class.dragging]="isDragging()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+          >
+            @if (selectedFile()) {
+              <div class="file-preview">
+                <span>{{ selectedFile()!.name }}</span>
+                <button type="button" (click)="removeFile()">×</button>
+              </div>
+            } @else {
+              <label class="dropzone-label">
+                <input type="file" (change)="onFileSelected($event)" accept=".png,.jpg,.jpeg,.pdf" hidden />
+                <strong>Glissez-déposez vos fichiers ici</strong> ou parcourez
+                <span class="dropzone-hint">PNG, JPG, PDF (Max 10MB)</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        @if (error()) {
+          <p class="error-text">{{ error() }}</p>
+        }
+        @if (successMessage()) {
+          <p class="success-text">{{ successMessage() }}</p>
+        }
+
+        <div class="form-actions">
+          <a routerLink="/mes-demandes" class="cancel-btn">Annuler</a>
+          <button type="submit" class="submit-btn" [disabled]="submitting()">
+            @if (submitting()) {
+              Envoi...
+            } @else {
+              Soumettre la demande
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+    </div>
+  </div>
+</div>
