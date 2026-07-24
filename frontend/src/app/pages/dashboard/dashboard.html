@@ -1,0 +1,6 @@
+<app-header />
+
+<div class="dashboard-content">
+  <p>Connecté en tant que rôle : {{ authService.user()?.role }}</p>
+  <button (click)="authService.logout()">Se déconnecter</button>
+</div>

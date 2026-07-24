@@ -1,0 +1,36 @@
+<header class="app-header">
+  <div class="header-left">
+    <a routerLink="/dashboard" class="logo-link">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+    <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
+    <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="3.6" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+  </svg>
+  <span class="logo-text">CIRES FLOW</span>
+</a>
+  </div>
+
+  <div class="header-right">
+    <button class="icon-btn" aria-label="Notifications">
+      <svg lucideBell [size]="20"></svg>
+      <span class="notif-dot"></span>
+    </button>
+
+    <div class="divider"></div>
+
+    <div class="user-badge">
+      <div class="avatar">
+        {{ initials }}
+        <span class="status-dot"></span>
+      </div>
+      <div class="user-text">
+        <span class="user-name">{{ displayName }}</span>
+        <span class="user-role">{{ roleLabel }}</span>
+      </div>
+    </div>
+  </div>
+</header>
