@@ -1,6 +1,18 @@
 <app-header />
 
 <div class="dashboard-content">
-  <p>Connecté en tant que rôle : {{ authService.user()?.role }}</p>
-  <button (click)="authService.logout()">Se déconnecter</button>
+  @if (loading()) {
+    <p>Chargement...</p>
+  } @else if (error()) {
+    <p class="error-text">{{ error() }}</p>
+  } @else {
+    <h2>KPI</h2>
+    <pre>{{ kpi() | json }}</pre>
+
+    <h2>Stats</h2>
+    <pre>{{ stats() | json }}</pre>
+
+    <h2>Performance</h2>
+    <pre>{{ performance() | json }}</pre>
+  }
 </div>
