@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
+import { calculerIndicateurSLA } from '../demande/demande.service';
 
 interface CurrentUser {
   userId: number;
@@ -19,7 +20,6 @@ export class DashboardService {
     if (user.role === Role.AGENT || user.role === Role.MANAGER) {
       return { departementId: user.departementId };
     }
-    // ADMIN — pas de restriction
     return {};
   }
 
@@ -125,6 +125,43 @@ export class DashboardService {
       tauxRespectSLAPourcent,
       nombreDemandesClotureesAnalysees: demandesCloturees.length,
       nombreDemandesAvecReponseAnalysees: demandesAvecReponse.length,
+    };
+  }
+
+  async getKpiStats(user: CurrentUser) {
+    const scopeWhere = this.buildScopeWhere(user);
+
+    const demandes = await this.prisma.demande.findMany({
+      where: scopeWhere,
+      select: { statut: true, dateLimiteSLA: true },
+    });
+
+    let actives = 0;
+    let enAttenteApprobation = 0;
+    let slaRespecte = 0;
+    let slaARisque = 0;
+    let slaDepasse = 0;
+
+    for (const d of demandes) {
+      if (['NOUVEAU', 'EN_ATTENTE_APPROBATION', 'EN_COURS'].includes(d.statut)) {
+        actives++;
+      }
+      if (d.statut === 'EN_ATTENTE_APPROBATION') {
+        enAttenteApprobation++;
+      }
+
+      const indicateur = calculerIndicateurSLA(d as any);
+      if (indicateur === 'RESPECTE') slaRespecte++;
+      if (indicateur === 'A_RISQUE') slaARisque++;
+      if (indicateur === 'DEPASSE') slaDepasse++;
+    }
+
+    return {
+      demandesActives: actives,
+      enAttenteApprobation,
+      slaDepasses: slaDepasse,
+      slaRespectees: slaRespecte,
+      slaARisque,
     };
   }
 }

@@ -16,4 +16,9 @@ export class DashboardController {
   async getPerformance(@Req() req: any) {
     return this.dashboardService.getPerformanceStats(req.user);
   }
+
+  @Get('kpi')
+  async getKpi(@Req() req: any) {
+    return this.dashboardService.getKpiStats(req.user);
+  }
 }

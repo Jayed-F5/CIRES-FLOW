@@ -36,7 +36,7 @@ const STATUTS_FERMES: StatutDemande[] = [
   StatutDemande.ANNULE,
 ];
 
-function calculerIndicateurSLA(demande: {
+export function calculerIndicateurSLA(demande: {
   statut: StatutDemande;
   dateLimiteSLA: Date | null;
 }): 'RESPECTE' | 'A_RISQUE' | 'DEPASSE' | 'NON_APPLICABLE' {
