@@ -35,6 +35,11 @@ export interface Demande {
   indicateurSLA: IndicateurSLA;
 }
 
+export interface DemandeDetail extends Demande {
+  demandeur: { id: number; nom: string; prenom: string; email: string };
+  agent: { id: number; nom: string; prenom: string; email: string } | null;
+}
+
 export interface DemandeListResponse {
   data: Demande[];
   total: number;
@@ -63,5 +68,15 @@ export class DemandeService {
     this.http.get<DemandeListResponse>(`${environment.apiUrl}/demande`, { params }),
   );
 }
-  
+  async getById(id: number): Promise<DemandeDetail> {
+    return firstValueFrom(
+      this.http.get<DemandeDetail>(`${environment.apiUrl}/demande/${id}`),
+    );
+  }
+
+  async updateStatut(id: number, statut: StatutDemande): Promise<Demande> {
+    return firstValueFrom(
+      this.http.put<Demande>(`${environment.apiUrl}/demande/${id}/statut`, { statut }),
+    );
+  }
 }

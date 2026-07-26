@@ -1,0 +1,203 @@
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    @if (loading()) {
+      <p class="status-text">Chargement...</p>
+    } @else if (error()) {
+      <p class="status-text error-text">{{ error() }}</p>
+    } @else if (demande()) {
+      <a routerLink="/mes-demandes" class="back-link">‹ Retour au tableau de bord</a>
+
+      <h1 class="ticket-title">
+        Demande DEM-{{ demande()!.id.toString().padStart(3, '0') }} : {{ demande()!.titre }}
+      </h1>
+
+      <div class="meta-row">
+        <span><strong>Demandeur:</strong> {{ demande()!.demandeur.prenom }} {{ demande()!.demandeur.nom }}</span>
+        <span class="meta-sep">|</span>
+        <span><strong>Département:</strong> {{ departementName() }}</span>
+        <span class="meta-sep">|</span>
+        <span><strong>Catégorie:</strong> {{ categorieName() }}</span>
+      </div>
+
+      @if (actionError()) {
+        <p class="error-text">{{ actionError() }}</p>
+      }
+
+      <div class="detail-grid">
+        <div class="main-col">
+
+          <div class="description-box">
+            <p>{{ demande()!.description }}</p>
+          </div>
+
+          <h2 class="section-title">FLUX D'ACTIVITÉ</h2>
+
+          <div class="timeline">
+            @for (event of timeline(); track $index) {
+              @if (event.type === 'event') {
+                <div class="timeline-row">
+                  <span class="timeline-dot"></span>
+                  <div class="timeline-event">
+                    <em>{{ event.text }}</em> — {{ formatDateTime(event.date) }}
+                  </div>
+                </div>
+              } @else {
+                <div class="timeline-row">
+                  <span class="timeline-dot filled"></span>
+                  <div class="timeline-comment" [class.internal]="event.comment!.visibilite === 'INTERNE'">
+                    <div class="comment-head">
+                      <span class="comment-visibility">Commentaire {{ event.comment!.visibilite === 'PUBLIC' ? 'Public' : 'Interne' }}</span>
+                      <span class="comment-date">{{ formatDateTime(event.date) }}</span>
+                    </div>
+                    <p>{{ event.comment!.contenu }}</p>
+                  </div>
+                </div>
+              }
+            } @empty {
+              <p class="status-text">Aucune activité pour le moment.</p>
+            }
+          </div>
+
+          <form [formGroup]="commentForm" (ngSubmit)="submitComment()" class="comment-form">
+            <textarea
+              formControlName="contenu"
+              rows="3"
+              placeholder="Écrire un commentaire..."
+            ></textarea>
+            <div class="comment-form-row">
+              @if (canWriteInterne()) {
+                <select formControlName="visibilite">
+                  <option value="PUBLIC">Public</option>
+                  <option value="INTERNE">Interne</option>
+                </select>
+              }
+              @if (piecesJointes().length > 0) {
+                <span class="attach-hint">📎 {{ piecesJointes().length }} pièce(s) jointe(s)</span>
+              }
+              <button type="submit" [disabled]="submittingComment()">
+                @if (submittingComment()) { Envoi... } @else { Envoyer } ➤
+              </button>
+            </div>
+          </form>
+
+          @if (piecesJointes().length > 0) {
+            <div class="attachments-inline">
+              <h2 class="section-title">PIÈCES JOINTES</h2>
+              <ul class="attachment-list">
+                @for (p of piecesJointes(); track p.id) {
+                  <li>
+                    <button type="button" class="attachment-link" (click)="downloadPieceJointe(p)">
+                      📎 {{ p.nomFichier }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+        </div>
+
+        <div class="side-col">
+          <div class="sidebar-card">
+
+            <div class="sla-block">
+              <span class="sla-label" [class]="'sla-' + demande()!.indicateurSLA">
+                SLA : {{ slaLabels[demande()!.indicateurSLA] }}
+              </span>
+              @if (slaTimeRemaining()) {
+                <p class="sla-remaining">Temps restant : {{ slaTimeRemaining() }}</p>
+              }
+            </div>
+
+            <div class="sidebar-section">
+              <p class="sidebar-label">STATUT ACTUEL</p>
+              <div class="status-pill" [class]="'status-' + demande()!.statut">
+                {{ statutLabels[demande()!.statut] }}
+              </div>
+            </div>
+
+            <div class="sidebar-section">
+              <p class="sidebar-label">CIRCUIT D'APPROBATION</p>
+              @if (circuitEtapes().length === 0) {
+                <p class="no-circuit">Aucune étape d'approbation requise.</p>
+              } @else {
+                <ul class="circuit-list">
+                  @for (a of circuitEtapes(); track a.id) {
+                    <li class="circuit-item">
+                      <span class="circuit-icon" [class]="'circuit-' + a.statut">
+                        @if (a.statut === 'APPROUVE') { ✓ }
+                        @else if (a.statut === 'REJETE') { ✕ }
+                        @else { ○ }
+                      </span>
+                      <div>
+                        <p class="circuit-role">Approbation {{ a.etape.roleApprobateur }}</p>
+                        @if (a.statut === 'APPROUVE') {
+                          <p class="circuit-sub circuit-sub-approved">Validé le {{ formatDate(a.date) }}</p>
+                        } @else if (a.statut === 'REJETE') {
+                          <p class="circuit-sub circuit-sub-rejected">Rejeté le {{ formatDate(a.date) }}</p>
+                        } @else {
+                          <p class="circuit-sub circuit-sub-pending">EN ATTENTE D'ACTION</p>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+
+            @if (actionableApprobation()) {
+              <div class="sidebar-actions">
+                <button
+                  class="reject-btn"
+                  [disabled]="decidingApprobationId() === actionableApprobation()!.id"
+                  (click)="decideApprobation(actionableApprobation()!, 'REJETE')"
+                >
+                  Rejeter
+                </button>
+                <button
+                  class="approve-btn"
+                  [disabled]="decidingApprobationId() === actionableApprobation()!.id"
+                  (click)="decideApprobation(actionableApprobation()!, 'APPROUVE')"
+                >
+                  Approuver
+                </button>
+              </div>
+            }
+
+            <div class="statut-actions">
+              @if (demande()!.statut === 'EN_COURS' && canProgressStatut()) {
+                <button class="secondary-btn" [disabled]="changingStatut()" (click)="changeStatut('RESOLU')">
+                  Marquer comme résolu
+                </button>
+              }
+              @if (demande()!.statut === 'RESOLU' && canProgressStatut()) {
+                <button class="secondary-btn" [disabled]="changingStatut()" (click)="changeStatut('CLOTURE')">
+                  Clôturer la demande
+                </button>
+              }
+              @if (demande()!.statut === 'NOUVEAU' || demande()!.statut === 'EN_ATTENTE_APPROBATION') {
+                <button class="secondary-btn danger" [disabled]="changingStatut()" (click)="changeStatut('ANNULE')">
+                  Annuler la demande
+                </button>
+              }
+            </div>
+
+          </div>
+
+          <div class="reference-card">
+            <p class="sidebar-label">RÉFÉRENCE TICKET</p>
+            <p class="reference-id">#DEM-{{ demande()!.id.toString().padStart(3, '0') }}</p>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+    </div>
+  </div>
+</div>

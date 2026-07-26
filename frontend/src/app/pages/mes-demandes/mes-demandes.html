@@ -68,7 +68,7 @@
           </thead>
           <tbody>
             @for (demande of demandes(); track demande.id) {
-              <tr>
+              <tr class="clickable-row" [routerLink]="['/demande', demande.id]">
                 <td class="id-cell">DEM-{{ demande.id.toString().padStart(3, '0') }}</td>
                 <td>{{ demande.titre }}</td>
                 <td>{{ categorieName(demande.categorieId) }}</td>

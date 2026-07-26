@@ -214,6 +214,10 @@ export class DemandeService {
   async findOne(id: number, user: CurrentUser) {
     const demande = await this.prisma.demande.findUnique({
       where: { id },
+      include: {
+        demandeur: { select: { id: true, nom: true, prenom: true, email: true } },
+        agent: { select: { id: true, nom: true, prenom: true, email: true } },
+      },
     });
 
     if (!demande) {
@@ -249,6 +253,17 @@ export class DemandeService {
       if (!isOwner && !isAdmin) {
         throw new ForbiddenException(
           'Seul le demandeur ou un Admin peut annuler cette demande',
+        );
+      }
+    }
+
+    if (dto.statut === StatutDemande.RESOLU || dto.statut === StatutDemande.CLOTURE) {
+      const isAgentOrAbove =
+        user.role === Role.AGENT || user.role === Role.MANAGER || user.role === Role.ADMIN;
+
+      if (!isAgentOrAbove) {
+        throw new ForbiddenException(
+          'Seul un Agent, Manager ou Admin peut faire progresser cette demande vers Résolu/Clôturé',
         );
       }
     }

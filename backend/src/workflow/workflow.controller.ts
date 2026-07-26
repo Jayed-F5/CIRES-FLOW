@@ -33,4 +33,9 @@ export class WorkflowController {
   ) {
     return this.workflowService.decideApprobation(id, dto, req.user);
   }
+  @UseGuards(JwtAuthGuard)
+  @Get('demande/:demandeId/approbations')
+  findByDemande(@Param('demandeId', ParseIntPipe) demandeId: number) {
+    return this.workflowService.findByDemande(demandeId);
+  }
 }

@@ -163,4 +163,12 @@ export class WorkflowService {
 
     return demande;
   }
+
+  async findByDemande(demandeId: number) {
+    return this.prisma.approbation.findMany({
+      where: { demandeId },
+      include: { etape: true },
+      orderBy: { etape: { ordre: 'asc' } },
+    });
+  }
 }
