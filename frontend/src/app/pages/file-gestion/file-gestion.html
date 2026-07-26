@@ -1,1 +1,90 @@
-<p>file-gestion works!</p>
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    <div class="greeting-card">
+      <div>
+        <h1>File de Gestion des Demandes</h1>
+        <p class="subtitle">
+          Demandes ouvertes nécessitant votre attention, triées par urgence SLA.
+        </p>
+      </div>
+      @if (urgentCount() > 0) {
+        <div class="urgent-badge">
+          {{ urgentCount() }} demande(s) urgente(s)
+        </div>
+      }
+    </div>
+
+    <div class="filters-row">
+      <select class="filter-select" [value]="selectedStatut()" (change)="onStatutChange($any($event.target).value)">
+        @for (opt of statutOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+      @if (isAdmin()) {
+        <select class="filter-select" [value]="selectedDepartementId()" (change)="onDepartementChange($any($event.target).value)">
+          <option value="">Tous les Départements</option>
+          @for (dept of departements(); track dept.id) {
+            <option [value]="dept.id">{{ dept.nom }}</option>
+          }
+        </select>
+      }
+    </div>
+
+    <div class="table-card">
+      @if (loading()) {
+        <p class="status-text">Chargement...</p>
+      } @else if (error()) {
+        <p class="status-text error-text">{{ error() }}</p>
+      } @else if (queue().length === 0) {
+        <p class="status-text">Aucune demande ouverte pour le moment. 🎉</p>
+      } @else {
+        <table class="demandes-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Titre</th>
+              <th>Département</th>
+              <th>Catégorie</th>
+              <th>Date de création</th>
+              <th>Statut</th>
+              <th>SLA</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (demande of queue(); track demande.id) {
+              <tr
+                class="clickable-row"
+                [class.urgent-row]="demande.indicateurSLA === 'DEPASSE' || demande.indicateurSLA === 'A_RISQUE'"
+                [routerLink]="['/demande', demande.id]"
+              >
+                <td class="id-cell">DEM-{{ demande.id.toString().padStart(3, '0') }}</td>
+                <td>{{ demande.titre }}</td>
+                <td>{{ departementName(demande.departementId) }}</td>
+                <td>{{ categorieName(demande.categorieId) }}</td>
+                <td>{{ formatDate(demande.dateCreation) }}</td>
+                <td>
+                  <span class="status-badge" [class]="'status-' + demande.statut">
+                    {{ statutLabels[demande.statut] }}
+                  </span>
+                </td>
+                <td>
+                  <span class="sla-badge" [class]="'sla-' + demande.indicateurSLA">
+                    {{ slaLabels[demande.indicateurSLA] }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+    </div>
+  </div>
+</div>

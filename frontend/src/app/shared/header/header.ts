@@ -1,12 +1,21 @@
 import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
-import { LucideBell, LucideUser, LucideLogOut, LucideChevronDown } from '@lucide/angular';
-
+import { RouterLink, RouterLinkActive } from '@angular/router';import { AuthService } from '../../services/auth.service';
+import {LucideBell,LucideUser,LucideLogOut,LucideChevronDown,LucideLayoutDashboard,LucideClipboardList,LucideFilePlus,LucideListChecks,} from '@lucide/angular';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, LucideBell, LucideUser, LucideLogOut, LucideChevronDown],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    LucideBell,
+    LucideUser,
+    LucideLogOut,
+    LucideChevronDown,
+    LucideLayoutDashboard,
+    LucideClipboardList,
+    LucideFilePlus,
+    LucideListChecks,
+  ],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -15,6 +24,24 @@ export class Header {
   private elementRef = inject(ElementRef);
 
   menuOpen = signal(false);
+
+  get navLinks(): { path: string; label: string; icon: string }[] {
+    const role = this.authService.user()?.role;
+    const links = [
+      { path: '/dashboard', label: 'Tableau de Bord', icon: 'dashboard' },
+      { path: '/mes-demandes', label: 'Mes Demandes', icon: 'demandes' },
+      { path: '/creer-demande', label: 'Nouvelle Demande', icon: 'nouvelle' },
+    ];
+
+    if (role === 'AGENT' || role === 'MANAGER' || role === 'ADMIN') {
+      links.push({ path: '/file-gestion', label: 'File de Gestion', icon: 'file' });
+    }
+
+    // Admin-only pages will be appended here as they're built:
+    // Gestion Utilisateurs, Départements/Catégories, Circuits d'Approbation, Configuration SLA
+
+    return links;
+  }
 
   get initials(): string {
     const user = this.authService.user();

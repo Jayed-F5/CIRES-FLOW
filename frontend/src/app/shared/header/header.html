@@ -1,18 +1,30 @@
 <header class="app-header">
-  <div class="header-left">
-    <a routerLink="/dashboard" class="logo-link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
-        <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
-        <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67" 
-              fill="none" 
-              stroke="#ffffff" 
-              stroke-width="3.6" 
-              stroke-linecap="round" 
-              stroke-linejoin="round" />
-      </svg>
-      <span class="logo-text">CIRES FLOW</span>
-    </a>
-  </div>
+  <a routerLink="/dashboard" class="logo-link">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+      <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
+      <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67" 
+            fill="none" 
+            stroke="#ffffff" 
+            stroke-width="3.6" 
+            stroke-linecap="round" 
+            stroke-linejoin="round" />
+    </svg>
+    <span class="logo-text">CIRES FLOW</span>
+  </a>
+
+  <nav class="main-nav">
+    @for (link of navLinks; track link.path) {
+      <a [routerLink]="link.path" routerLinkActive="nav-link-active" class="nav-link">
+        @switch (link.icon) {
+          @case ('dashboard') { <svg lucideLayoutDashboard [size]="16"></svg> }
+          @case ('demandes') { <svg lucideClipboardList [size]="16"></svg> }
+          @case ('nouvelle') { <svg lucideFilePlus [size]="16"></svg> }
+          @case ('file') { <svg lucideListChecks [size]="16"></svg> }
+        }
+        <span>{{ link.label }}</span>
+      </a>
+    }
+  </nav>
 
   <div class="header-right">
     <button class="icon-btn" aria-label="Notifications">
