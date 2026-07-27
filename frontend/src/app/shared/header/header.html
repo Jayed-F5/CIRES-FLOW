@@ -27,10 +27,50 @@
   </nav>
 
   <div class="header-right">
-    <button class="icon-btn" aria-label="Notifications">
-      <svg lucideBell [size]="20"></svg>
-      <span class="notif-dot"></span>
-    </button>
+    <div class="notif-menu-wrapper">
+      <button class="icon-btn" aria-label="Notifications" (click)="toggleNotifMenu()">
+        <svg lucideBell [size]="20"></svg>
+        @if (notificationService.unreadCount() > 0) {
+          <span class="notif-dot"></span>
+        }
+      </button>
+
+      @if (notifMenuOpen()) {
+        <div class="notif-dropdown">
+          <div class="notif-dropdown-header">
+            <span>Notifications</span>
+            @if (notificationService.unreadCount() > 0) {
+              <button type="button" class="mark-all-btn" (click)="markAllRead()">
+                Tout marquer comme lu
+              </button>
+            }
+          </div>
+
+          <div class="notif-list">
+            @if (notificationService.notifications().length === 0) {
+              <p class="notif-empty">Aucune notification.</p>
+            } @else {
+              @for (notif of notificationService.notifications(); track notif.id) {
+                <button
+                  type="button"
+                  class="notif-item"
+                  [class.unread]="!notif.lu"
+                  (click)="onNotificationClick(notif)"
+                >
+                  @if (!notif.lu) {
+                    <span class="notif-item-dot"></span>
+                  }
+                  <div class="notif-item-body">
+                    <p class="notif-item-message">{{ notif.message }}</p>
+                    <span class="notif-item-date">{{ formatNotifDate(notif.date) }}</span>
+                  </div>
+                </button>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
 
     <div class="divider"></div>
 

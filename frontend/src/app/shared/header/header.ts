@@ -1,6 +1,17 @@
 import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';import { AuthService } from '../../services/auth.service';
-import {LucideBell,LucideUser,LucideLogOut,LucideChevronDown,LucideLayoutDashboard,LucideClipboardList,LucideFilePlus,LucideListChecks,} from '@lucide/angular';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { NotificationService, Notification } from '../../services/notification.service';
+import {
+  LucideBell,
+  LucideUser,
+  LucideLogOut,
+  LucideChevronDown,
+  LucideLayoutDashboard,
+  LucideClipboardList,
+  LucideFilePlus,
+  LucideListChecks,
+} from '@lucide/angular';
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -21,9 +32,19 @@ import {LucideBell,LucideUser,LucideLogOut,LucideChevronDown,LucideLayoutDashboa
 })
 export class Header {
   authService = inject(AuthService);
+  notificationService = inject(NotificationService);
   private elementRef = inject(ElementRef);
+  private router = inject(Router);
 
   menuOpen = signal(false);
+  notifMenuOpen = signal(false);
+
+  constructor() {
+    if (this.authService.isAuthenticated()) {
+      this.notificationService.connect();
+      this.notificationService.loadInitial();
+    }
+  }
 
   get navLinks(): { path: string; label: string; icon: string }[] {
     const role = this.authService.user()?.role;
@@ -67,10 +88,44 @@ export class Header {
 
   toggleMenu(): void {
     this.menuOpen.update((v) => !v);
+    this.notifMenuOpen.set(false);
   }
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  toggleNotifMenu(): void {
+    this.notifMenuOpen.update((v) => !v);
+    this.menuOpen.set(false);
+  }
+
+  closeNotifMenu(): void {
+    this.notifMenuOpen.set(false);
+  }
+
+  async onNotificationClick(notif: Notification): Promise<void> {
+    if (!notif.lu) {
+      await this.notificationService.markAsRead(notif.id);
+    }
+    this.closeNotifMenu();
+    if (notif.lien) {
+      this.router.navigateByUrl(notif.lien);
+    }
+  }
+
+  async markAllRead(): Promise<void> {
+    await this.notificationService.markAllAsRead();
+  }
+
+  formatNotifDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    return d.toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   logout(): void {
@@ -82,6 +137,7 @@ export class Header {
   onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.closeMenu();
+      this.closeNotifMenu();
     }
   }
 }
