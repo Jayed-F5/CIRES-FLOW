@@ -5,8 +5,9 @@ import { MesDemandes } from './pages/mes-demandes/mes-demandes';
 import { CreerDemande } from './pages/creer-demande/creer-demande';
 import { FileGestion } from './pages/file-gestion/file-gestion';
 import { authGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
 import { DetailDemande } from './pages/detail-demande/detail-demande';
-
+import { GestionUtilisateurs } from './pages/gestion-utilisateurs/gestion-utilisateurs';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -15,6 +16,11 @@ export const routes: Routes = [
   { path: 'creer-demande', component: CreerDemande, canActivate: [authGuard] },
   { path: 'demande/:id', component: DetailDemande, canActivate: [authGuard] },
   { path: 'file-gestion', component: FileGestion, canActivate: [authGuard] },
+  {
+    path: 'gestion-utilisateurs',
+    component: GestionUtilisateurs,
+    canActivate: [authGuard, roleGuard(['ADMIN'])],
+  },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' },
 ];

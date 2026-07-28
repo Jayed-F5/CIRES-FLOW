@@ -54,6 +54,7 @@ model Utilisateur {
   email         String   @unique
   motDePasse    String
   role          Role
+  actif         Boolean  @default(true)
   departementId Int?     @map("departement_id")
   departement   Departement? @relation(fields: [departementId], references: [id])
 

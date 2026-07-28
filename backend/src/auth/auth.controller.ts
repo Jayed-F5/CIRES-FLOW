@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Param, ParseIntPipe, Req, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateStatutUserDto } from './dto/update-statut-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -34,4 +36,25 @@ export class AuthController {
   getProfile(@Req() req: any) {
     return req.user;
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
+@Get('users')
+getUsers() {
+  return this.authService.getUsers();
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
+@Patch('users/:id')
+updateUser(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
+  return this.authService.updateUser(id, dto);
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
+@Patch('users/:id/statut')
+updateStatutUser(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStatutUserDto) {
+  return this.authService.updateStatutUser(id, dto.actif);
+}
 }

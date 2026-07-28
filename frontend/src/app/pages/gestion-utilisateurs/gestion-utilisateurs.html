@@ -1,0 +1,189 @@
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    <div class="greeting-card">
+      <div>
+        <h1>Gestion des Utilisateurs</h1>
+        <p class="subtitle">Gérez les rôles, départements et accès des collaborateurs.</p>
+      </div>
+      <a class="new-btn" (click)="openCreateModal()">+ CRÉER UN UTILISATEUR</a>
+    </div>
+
+    <div class="filters-row">
+      <div class="search-wrapper">
+        <svg lucideSearch [size]="16" class="search-icon"></svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Rechercher un collaborateur..."
+          [value]="searchTerm()"
+          (input)="onSearchInput($any($event.target).value)"
+        />
+      </div>
+      <select class="filter-select" [value]="roleFilter()" (change)="onRoleFilterChange($any($event.target).value)">
+        <option value="">Tous les Rôles</option>
+        @for (role of roleOptions; track role) {
+          <option [value]="role">{{ roleLabels[role] }}</option>
+        }
+      </select>
+      <select class="filter-select" [value]="statutFilter()" (change)="onStatutFilterChange($any($event.target).value)">
+        <option value="">Tous les Statuts</option>
+        <option value="ACTIF">Actif</option>
+        <option value="INACTIF">Désactivé</option>
+      </select>
+    </div>
+
+    <div class="table-card">
+      @if (loading()) {
+        <p class="status-text">Chargement...</p>
+      } @else if (error()) {
+        <p class="status-text error-text">{{ error() }}</p>
+      } @else if (filteredUsers().length === 0) {
+        <p class="status-text">Aucun utilisateur trouvé.</p>
+      } @else {
+        <table class="demandes-table">
+          <thead>
+            <tr>
+              <th>Collaborateur</th>
+              <th>Département</th>
+              <th>Rôle Système</th>
+              <th>Statut</th>
+              <th class = "actions-header">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of filteredUsers(); track user.id) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar">{{ user.prenom.charAt(0) }}{{ user.nom.charAt(0) }}</div>
+                    <div>
+                      <div class="user-name">{{ user.prenom }} {{ user.nom }}</div>
+                      <div class="user-email">{{ user.email }}</div>
+                    </div>
+                  </div>
+                </td>
+
+                <td>
+                  @if (editingUserId() === user.id) {
+                    <select
+                      class="filter-select inline-select"
+                      [value]="editDepartementId()"
+                      (change)="onEditDepartementChange($any($event.target).value)"
+                    >
+                      <option value="">Aucun</option>
+                      @for (dept of departements(); track dept.id) {
+                        <option [value]="dept.id">{{ dept.nom }}</option>
+                      }
+                    </select>
+                  } @else {
+                    {{ user.departement?.nom ?? '—' }}
+                  }
+                </td>
+
+                <td>
+                  @if (editingUserId() === user.id) {
+                    <select
+                      class="filter-select inline-select"
+                      [value]="editRole()"
+                      (change)="onEditRoleChange($any($event.target).value)"
+                    >
+                      @for (role of roleOptions; track role) {
+                        <option [value]="role">{{ roleLabels[role] }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <span class="status-badge status-role">{{ roleLabels[user.role] }}</span>
+                  }
+                </td>
+
+                <td>
+                  <span class="status-badge" [class]="user.actif ? 'status-RESOLU' : 'status-ANNULE'">
+                    {{ user.actif ? 'Actif' : 'Désactivé' }}
+                  </span>
+                </td>
+
+                <td class="actions-cell">
+                  @if (editingUserId() === user.id) {
+                    <a class="link-btn" (click)="saveEdit(user)">Enregistrer</a>
+                    <a class="link-btn link-btn-muted" (click)="cancelEdit()">Annuler</a>
+                  } @else {
+                    <a class="link-btn" (click)="startEdit(user)">Modifier</a>
+                    <a class="link-btn" [class.link-btn-danger]="user.actif" [class.link-btn-success]="!user.actif" (click)="toggleStatut(user)">
+                      {{ user.actif ? 'Désactiver' : 'Activer' }}
+                    </a>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+      <div class="footer-links">
+        <a href="#">Support Technique</a>
+        <a href="#">Conditions d'utilisation</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (showCreateModal()) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Créer un utilisateur</h2>
+
+      @if (createError()) {
+        <p class="status-text error-text modal-error">{{ createError() }}</p>
+      }
+
+      <div class="field">
+        <label>Prénom</label>
+        <input type="text" [value]="newUser().prenom" (input)="updateNewUserField('prenom', $any($event.target).value)" />
+      </div>
+      <div class="field">
+        <label>Nom</label>
+        <input type="text" [value]="newUser().nom" (input)="updateNewUserField('nom', $any($event.target).value)" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" [value]="newUser().email" (input)="updateNewUserField('email', $any($event.target).value)" />
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" [value]="newUser().motDePasse" (input)="updateNewUserField('motDePasse', $any($event.target).value)" />
+      </div>
+      <div class="field">
+        <label>Rôle</label>
+        <select [value]="newUser().role" (change)="updateNewUserField('role', $any($event.target).value)">
+          @for (role of roleOptions; track role) {
+            <option [value]="role">{{ roleLabels[role] }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label>Département</label>
+        <select [value]="newUser().departementId" (change)="updateNewUserField('departementId', $any($event.target).value)">
+          <option value="">Aucun</option>
+          @for (dept of departements(); track dept.id) {
+            <option [value]="dept.id">{{ dept.nom }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <a class="cancel-btn" (click)="closeCreateModal()">Annuler</a>
+        <button class="submit-btn" [disabled]="createSubmitting()" (click)="submitCreateUser()">
+          {{ createSubmitting() ? 'Création...' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

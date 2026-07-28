@@ -11,22 +11,24 @@ import {
   LucideClipboardList,
   LucideFilePlus,
   LucideListChecks,
+  LucideUsers,
 } from '@lucide/angular';
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [
-    RouterLink,
-    RouterLinkActive,
-    LucideBell,
-    LucideUser,
-    LucideLogOut,
-    LucideChevronDown,
-    LucideLayoutDashboard,
-    LucideClipboardList,
-    LucideFilePlus,
-    LucideListChecks,
-  ],
+  RouterLink,
+  RouterLinkActive,
+  LucideBell,
+  LucideUser,
+  LucideLogOut,
+  LucideChevronDown,
+  LucideLayoutDashboard,
+  LucideClipboardList,
+  LucideFilePlus,
+  LucideListChecks,
+  LucideUsers,
+],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -55,13 +57,14 @@ export class Header {
     ];
 
     if (role === 'AGENT' || role === 'MANAGER' || role === 'ADMIN') {
-      links.push({ path: '/file-gestion', label: 'File de Gestion', icon: 'file' });
-    }
+  links.push({ path: '/file-gestion', label: 'File de Gestion', icon: 'file' });
+}
 
-    // Admin-only pages will be appended here as they're built:
-    // Gestion Utilisateurs, Départements/Catégories, Circuits d'Approbation, Configuration SLA
+if (role === 'ADMIN') {
+  links.push({ path: '/gestion-utilisateurs', label: 'Utilisateurs', icon: 'users' });
+}
 
-    return links;
+return links;
   }
 
   get initials(): string {
