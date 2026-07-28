@@ -115,4 +115,48 @@ async updateStatutUser(id: number, actif: boolean) {
     select: { id: true, nom: true, prenom: true, email: true, actif: true },
   });
 }
+
+async getMe(userId: number) {
+  const user = await this.prisma.utilisateur.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      nom: true,
+      prenom: true,
+      email: true,
+      role: true,
+      actif: true,
+      departementId: true,
+      departement: { select: { id: true, nom: true } },
+    },
+  });
+
+  if (!user) {
+    throw new NotFoundException('Utilisateur introuvable');
+  }
+
+  return user;
+}
+
+async changePassword(userId: number, ancienMotDePasse: string, nouveauMotDePasse: string) {
+  const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new NotFoundException('Utilisateur introuvable');
+  }
+
+  const valid = await bcrypt.compare(ancienMotDePasse, user.motDePasse);
+  if (!valid) {
+    throw new UnauthorizedException('Mot de passe actuel incorrect');
+  }
+
+  const hashed = await bcrypt.hash(nouveauMotDePasse, 10);
+  await this.prisma.utilisateur.update({
+    where: { id: userId },
+    data: { motDePasse: hashed },
+  });
+
+  return { message: 'Mot de passe mis à jour avec succès' };
+}
+
+
 }

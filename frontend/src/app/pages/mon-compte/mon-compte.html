@@ -1,0 +1,100 @@
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    <div class="greeting-card">
+      <div>
+        <h1>Mon Compte</h1>
+        <p class="subtitle">Consultez vos informations et gérez votre sécurité.</p>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="status-text">Chargement...</p>
+    } @else if (error()) {
+      <p class="status-text error-text page-error">{{ error() }}</p>
+    } @else if (profile()) {
+      <div class="two-columns">
+        <div class="table-card profile-card">
+          <div class="avatar-large">{{ initials }}</div>
+          <h2 class="profile-name">{{ profile()!.prenom }} {{ profile()!.nom }}</h2>
+          <span class="status-badge" [class.status-RESOLU]="profile()!.actif" [class.status-ANNULE]="!profile()!.actif">
+            {{ profile()!.actif ? 'Actif' : 'Désactivé' }}
+          </span>
+
+          <div class="profile-info">
+            <div class="info-row">
+              <span class="info-label">Rôle Système</span>
+              <span class="info-value">{{ roleLabels[profile()!.role] ?? profile()!.role }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Adresse Email</span>
+              <span class="info-value">{{ profile()!.email }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Département</span>
+              <span class="info-value">{{ profile()!.departement?.nom ?? '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card password-card">
+          <div class="column-header">
+            <h2>Changer le mot de passe</h2>
+          </div>
+
+          @if (passwordError()) {
+            <p class="status-text error-text modal-error">{{ passwordError() }}</p>
+          }
+          @if (passwordSuccess()) {
+            <p class="status-text success-text modal-error">{{ passwordSuccess() }}</p>
+          }
+
+          <div class="field">
+            <label>Mot de passe actuel</label>
+            <input
+              type="password"
+              [value]="passwordForm().ancienMotDePasse"
+              (input)="updatePasswordField('ancienMotDePasse', $any($event.target).value)"
+            />
+          </div>
+
+          <div class="field">
+            <label>Nouveau mot de passe</label>
+            <input
+              type="password"
+              [value]="passwordForm().nouveauMotDePasse"
+              (input)="updatePasswordField('nouveauMotDePasse', $any($event.target).value)"
+            />
+          </div>
+
+          <div class="field">
+            <label>Confirmer le nouveau mot de passe</label>
+            <input
+              type="password"
+              [value]="passwordForm().confirmationMotDePasse"
+              (input)="updatePasswordField('confirmationMotDePasse', $any($event.target).value)"
+            />
+          </div>
+
+          <div class="modal-actions">
+            <button class="submit-btn" [disabled]="passwordSubmitting()" (click)="submitPasswordChange()">
+              {{ passwordSubmitting() ? 'Mise à jour...' : 'Mettre à jour le mot de passe' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+      <div class="footer-links">
+        <a href="#">Support Technique</a>
+        <a href="#">Conditions d'utilisation</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+    </div>
+  </div>
+</div>

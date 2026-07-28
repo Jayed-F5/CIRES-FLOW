@@ -103,4 +103,28 @@ export class AuthService {
     if (!payload) return true;
     return payload.exp * 1000 < Date.now();
   }
+
+  async getMe(): Promise<{
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: Role;
+  actif: boolean;
+  departementId: number | null;
+  departement: { id: number; nom: string } | null;
+}> {
+  return firstValueFrom(
+    this.http.get<any>(`${environment.apiUrl}/auth/me`),
+  );
+}
+
+async changePassword(ancienMotDePasse: string, nouveauMotDePasse: string): Promise<void> {
+  await firstValueFrom(
+    this.http.patch(`${environment.apiUrl}/auth/me/password`, {
+      ancienMotDePasse,
+      nouveauMotDePasse,
+    }),
+  );
+}
 }
