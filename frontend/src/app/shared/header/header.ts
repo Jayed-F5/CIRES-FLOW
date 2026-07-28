@@ -13,6 +13,7 @@ import {
   LucideListChecks,
   LucideUsers,
   LucideBuilding2,
+  LucideWorkflow,
 } from '@lucide/angular';
 @Component({
   selector: 'app-header',
@@ -30,6 +31,7 @@ imports: [
   LucideListChecks,
   LucideUsers,
   LucideBuilding2,
+  LucideWorkflow
 ],
   templateUrl: './header.html',
   styleUrl: './header.css',
@@ -64,10 +66,8 @@ export class Header {
 
 if (role === 'ADMIN') {
   links.push({ path: '/gestion-utilisateurs', label: 'Utilisateurs', icon: 'users' });
-  if (role === 'ADMIN') {
-  links.push({ path: '/gestion-utilisateurs', label: 'Utilisateurs', icon: 'users' });
   links.push({ path: '/gestion-departements', label: 'Départements', icon: 'departements' });
-}
+  links.push({ path: '/gestion-workflow', label: 'Circuits', icon: 'workflow' });
 }
 
 return links;

@@ -5,6 +5,7 @@ import { HistoriqueService } from '../historique/historique.service';
 import { NotificationService } from '../notification/notification.service';
 import { CreateEtapeDto } from './dto/create-etape.dto';
 import { DecideApprobationDto } from './dto/decide-approbation.dto';
+import { UpdateEtapeDto } from './dto/update-etape.dto';
 
 interface CurrentUser {
   userId: number;
@@ -171,4 +172,49 @@ export class WorkflowService {
       orderBy: { etape: { ordre: 'asc' } },
     });
   }
+  async updateEtape(id: number, dto: UpdateEtapeDto) {
+  const etape = await this.prisma.workflowEtape.findUnique({ where: { id } });
+  if (!etape) {
+    throw new NotFoundException('Étape introuvable');
+  }
+
+  if (dto.ordre !== undefined && dto.ordre !== etape.ordre) {
+    const conflict = await this.prisma.workflowEtape.findUnique({
+      where: {
+        categorieId_ordre: {
+          categorieId: etape.categorieId,
+          ordre: dto.ordre,
+        },
+      },
+    });
+    if (conflict) {
+      throw new ConflictException(
+        `Une étape avec l'ordre ${dto.ordre} existe déjà pour cette catégorie`,
+      );
+    }
+  }
+
+  return this.prisma.workflowEtape.update({
+    where: { id },
+    data: dto,
+  });
+}
+
+async removeEtape(id: number) {
+  const etape = await this.prisma.workflowEtape.findUnique({ where: { id } });
+  if (!etape) {
+    throw new NotFoundException('Étape introuvable');
+  }
+
+  const approbationsLiees = await this.prisma.approbation.count({
+    where: { etapeId: id },
+  });
+  if (approbationsLiees > 0) {
+    throw new ConflictException(
+      'Impossible de supprimer cette étape : des approbations y sont déjà rattachées',
+    );
+  }
+
+  return this.prisma.workflowEtape.delete({ where: { id } });
+}
 }

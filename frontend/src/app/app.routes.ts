@@ -9,6 +9,7 @@ import { roleGuard } from './guards/role.guard';
 import { DetailDemande } from './pages/detail-demande/detail-demande';
 import { GestionUtilisateurs } from './pages/gestion-utilisateurs/gestion-utilisateurs';
 import { GestionDepartements } from './pages/gestion-departements/gestion-departements';
+import { GestionWorkflow } from './pages/gestion-workflow/gestion-workflow';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -17,6 +18,11 @@ export const routes: Routes = [
   { path: 'creer-demande', component: CreerDemande, canActivate: [authGuard] },
   { path: 'demande/:id', component: DetailDemande, canActivate: [authGuard] },
   { path: 'file-gestion', component: FileGestion, canActivate: [authGuard] },
+  {
+  path: 'gestion-workflow',
+  component: GestionWorkflow,
+  canActivate: [authGuard, roleGuard(['ADMIN'])],
+},
   {
   path: 'gestion-departements',
   component: GestionDepartements,

@@ -1,11 +1,12 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Req, UseGuards } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { UpdateEtapeDto } from './dto/update-etape.dto';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';import { Role } from '@prisma/client';
 import { WorkflowService } from './workflow.service';
 import { CreateEtapeDto } from './dto/create-etape.dto';
 import { DecideApprobationDto } from './dto/decide-approbation.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+
 
 @Controller()
 export class WorkflowController {
@@ -38,4 +39,18 @@ export class WorkflowController {
   findByDemande(@Param('demandeId', ParseIntPipe) demandeId: number) {
     return this.workflowService.findByDemande(demandeId);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
+@Patch('workflow/etapes/:id')
+updateEtape(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEtapeDto) {
+  return this.workflowService.updateEtape(id, dto);
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
+@Delete('workflow/etapes/:id')
+removeEtape(@Param('id', ParseIntPipe) id: number) {
+  return this.workflowService.removeEtape(id);
+}
 }

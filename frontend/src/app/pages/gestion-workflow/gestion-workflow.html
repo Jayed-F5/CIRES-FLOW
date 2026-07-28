@@ -1,0 +1,145 @@
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    <div class="greeting-card">
+      <div>
+        <h1>Circuits d'Approbation</h1>
+        <p class="subtitle">Configurez les étapes de validation par catégorie de demande.</p>
+      </div>
+    </div>
+
+    @if (error()) {
+      <p class="status-text error-text page-error">{{ error() }}</p>
+    }
+
+    @if (loading()) {
+      <p class="status-text">Chargement...</p>
+    } @else {
+      <div class="selectors-row">
+        <select
+          class="filter-select"
+          [value]="selectedDepartementId()"
+          (change)="selectDepartement(+$any($event.target).value)"        >
+          @for (dept of departements(); track dept.id) {
+            <option [value]="dept.id">{{ dept.nom }}</option>
+          }
+        </select>
+
+        <select
+          class="filter-select"
+          [value]="selectedCategorieId()"
+          (change)="selectCategorie(+$any($event.target).value)"
+          [disabled]="categoriesForSelected().length === 0"
+        >
+          <option value="" disabled>Choisir une catégorie</option>
+          @for (cat of categoriesForSelected(); track cat.id) {
+            <option [value]="cat.id">{{ cat.nom }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="table-card">
+        <div class="column-header">
+          <h2>
+            Étapes
+            @if (selectedCategorie()) {
+              <span class="column-subtitle">— {{ selectedCategorie()!.nom }}</span>
+            }
+          </h2>
+          <a
+            class="new-btn small-btn"
+            [class.new-btn-disabled]="!selectedCategorieId()"
+            (click)="selectedCategorieId() && openCreateEtape()"
+          >
+            + Ajouter une étape
+          </a>
+        </div>
+
+        @if (!selectedCategorieId()) {
+          <p class="status-text">Sélectionnez une catégorie pour voir son circuit d'approbation.</p>
+        } @else if (etapesLoading()) {
+          <p class="status-text">Chargement des étapes...</p>
+        } @else if (etapesTriees().length === 0) {
+          <p class="status-text">Aucune étape configurée — la demande passera directement à "En cours".</p>
+        } @else {
+          <table class="demandes-table">
+            <thead>
+              <tr>
+                <th>Ordre</th>
+                <th>Rôle approbateur</th>
+                <th class="actions-header">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (etape of etapesTriees(); track etape.id) {
+                <tr>
+                  <td class="ordre-cell">{{ etape.ordre }}</td>
+                  <td>
+                    <span class="status-badge status-role">{{ roleLabels[etape.roleApprobateur] }}</span>
+                  </td>
+                  <td class="actions-cell">
+                    <a class="link-btn" (click)="openEditEtape(etape)">Modifier</a>
+                    <a class="link-btn link-btn-danger" (click)="deleteEtape(etape)">Supprimer</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+      <div class="footer-links">
+        <a href="#">Support Technique</a>
+        <a href="#">Conditions d'utilisation</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (showEtapeModal()) {
+  <div class="modal-overlay" (click)="closeEtapeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ editingEtapeId() ? "Modifier l'étape" : 'Ajouter une étape' }}</h2>
+
+      @if (etapeError()) {
+        <p class="status-text error-text modal-error">{{ etapeError() }}</p>
+      }
+
+      <div class="field">
+        <label>Ordre</label>
+        <input
+          type="number"
+          min="1"
+          [value]="etapeForm().ordre"
+          (input)="updateEtapeField('ordre', $any($event.target).value)"
+        />
+      </div>
+
+      <div class="field">
+        <label>Rôle approbateur</label>
+        <select
+          [value]="etapeForm().roleApprobateur"
+          (change)="updateEtapeField('roleApprobateur', $any($event.target).value)"
+        >
+          @for (role of roleOptions; track role) {
+            <option [value]="role">{{ roleLabels[role] }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <a class="cancel-btn" (click)="closeEtapeModal()">Annuler</a>
+        <button class="submit-btn" [disabled]="etapeSubmitting()" (click)="submitEtape()">
+          {{ etapeSubmitting() ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
