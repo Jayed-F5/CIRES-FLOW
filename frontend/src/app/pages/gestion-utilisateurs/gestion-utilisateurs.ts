@@ -1,6 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Header } from '../../shared/header/header';
 import { environment } from '../../../environments/environment';
@@ -25,7 +24,7 @@ interface NewUserForm {
 @Component({
   selector: 'app-gestion-utilisateurs',
   standalone: true,
-  imports: [Header, CommonModule, RouterLink, LucideSearch],
+  imports: [Header, CommonModule, LucideSearch],
   templateUrl: './gestion-utilisateurs.html',
   styleUrl: './gestion-utilisateurs.css',
 })

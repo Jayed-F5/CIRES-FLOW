@@ -1,0 +1,181 @@
+<div class="page-wrapper">
+  <app-header />
+
+  <div class="page-content">
+    <div class="greeting-card">
+      <div>
+        <h1>Départements & Catégories</h1>
+        <p class="subtitle">Gérez la structure organisationnelle et les catégories de demandes.</p>
+      </div>
+    </div>
+
+    @if (error()) {
+      <p class="status-text error-text page-error">{{ error() }}</p>
+    }
+
+    @if (loading()) {
+      <p class="status-text">Chargement...</p>
+    } @else {
+      <div class="two-columns">
+        <div class="table-card dept-column">
+          <div class="column-header">
+            <h2>Départements</h2>
+            <a class="new-btn small-btn" (click)="openCreateDept()">+ Ajouter</a>
+          </div>
+
+          <div class="dept-list">
+            @for (dept of departements(); track dept.id) {
+              <div
+                class="dept-item"
+                [class.dept-item-active]="dept.id === selectedDepartementId()"
+                (click)="selectDepartement(dept.id)"
+              >
+                <span class="dept-name">{{ dept.nom }}</span>
+                <div class="dept-actions">
+                  <a class="link-btn" (click)="$event.stopPropagation(); openEditDept(dept)">Modifier</a>
+                  <a class="link-btn link-btn-danger" (click)="$event.stopPropagation(); deleteDept(dept)">Supprimer</a>
+                </div>
+              </div>
+            }
+            @if (departements().length === 0) {
+              <p class="status-text">Aucun département.</p>
+            }
+          </div>
+        </div>
+
+        <div class="table-card cat-column">
+          <div class="column-header">
+            <h2>
+              Catégories
+              @if (selectedDepartement()) {
+                <span class="column-subtitle">— {{ selectedDepartement()!.nom }}</span>
+              }
+            </h2>
+            <a
+                class="new-btn small-btn"
+              [class.new-btn-disabled]="!selectedDepartementId()"
+              (click)="selectedDepartementId() && openCreateCat()"
+            >
+              + Ajouter
+            </a>
+          </div>
+
+          @if (!selectedDepartementId()) {
+            <p class="status-text">Sélectionnez un département pour voir ses catégories.</p>
+          } @else if (categoriesForSelected().length === 0) {
+            <p class="status-text">Aucune catégorie pour ce département.</p>
+          } @else {
+            <table class="demandes-table">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Délai réponse (h)</th>
+                  <th>Délai résolution (h)</th>
+                  <th class="actions-header">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cat of categoriesForSelected(); track cat.id) {
+                  <tr>
+                    <td>{{ cat.nom }}</td>
+                    <td>{{ cat.delaiReponse }}</td>
+                    <td>{{ cat.delaiResolution }}</td>
+                    <td class="actions-cell">
+                      <a class="link-btn" (click)="openEditCat(cat)">Modifier</a>
+                      <a class="link-btn link-btn-danger" (click)="deleteCat(cat)">Supprimer</a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="dashboard-footer">
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
+      <div class="footer-links">
+        <a href="#">Support Technique</a>
+        <a href="#">Conditions d'utilisation</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (showDeptModal()) {
+  <div class="modal-overlay" (click)="closeDeptModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ editingDeptId() ? 'Modifier le département' : 'Créer un département' }}</h2>
+
+      @if (deptError()) {
+        <p class="status-text error-text modal-error">{{ deptError() }}</p>
+      }
+
+      <div class="field">
+        <label>Nom</label>
+        <input
+          type="text"
+          [value]="deptForm().nom"
+          (input)="updateDeptField($any($event.target).value)"
+        />
+      </div>
+
+      <div class="modal-actions">
+        <a class="cancel-btn" (click)="closeDeptModal()">Annuler</a>
+        <button class="submit-btn" [disabled]="deptSubmitting()" (click)="submitDept()">
+          {{ deptSubmitting() ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showCatModal()) {
+  <div class="modal-overlay" (click)="closeCatModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ editingCatId() ? 'Modifier la catégorie' : 'Créer une catégorie' }}</h2>
+
+      @if (catError()) {
+        <p class="status-text error-text modal-error">{{ catError() }}</p>
+      }
+
+      <div class="field">
+        <label>Nom</label>
+        <input
+          type="text"
+          [value]="catForm().nom"
+          (input)="updateCatField('nom', $any($event.target).value)"
+        />
+      </div>
+
+      <div class="field">
+        <label>Délai de réponse (heures)</label>
+        <input
+          type="number"
+          [value]="catForm().delaiReponse"
+          (input)="updateCatField('delaiReponse', $any($event.target).value)"
+        />
+      </div>
+
+      <div class="field">
+        <label>Délai de résolution (heures)</label>
+        <input
+          type="number"
+          [value]="catForm().delaiResolution"
+          (input)="updateCatField('delaiResolution', $any($event.target).value)"
+        />
+      </div>
+
+      <div class="modal-actions">
+        <a class="cancel-btn" (click)="closeCatModal()">Annuler</a>
+        <button class="submit-btn" [disabled]="catSubmitting()" (click)="submitCat()">
+          {{ catSubmitting() ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

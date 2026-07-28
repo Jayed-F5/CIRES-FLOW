@@ -12,11 +12,12 @@ import {
   LucideFilePlus,
   LucideListChecks,
   LucideUsers,
+  LucideBuilding2,
 } from '@lucide/angular';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [
+imports: [
   RouterLink,
   RouterLinkActive,
   LucideBell,
@@ -28,6 +29,7 @@ import {
   LucideFilePlus,
   LucideListChecks,
   LucideUsers,
+  LucideBuilding2,
 ],
   templateUrl: './header.html',
   styleUrl: './header.css',
@@ -62,6 +64,10 @@ export class Header {
 
 if (role === 'ADMIN') {
   links.push({ path: '/gestion-utilisateurs', label: 'Utilisateurs', icon: 'users' });
+  if (role === 'ADMIN') {
+  links.push({ path: '/gestion-utilisateurs', label: 'Utilisateurs', icon: 'users' });
+  links.push({ path: '/gestion-departements', label: 'Départements', icon: 'departements' });
+}
 }
 
 return links;
