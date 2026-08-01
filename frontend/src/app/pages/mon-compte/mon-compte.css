@@ -343,3 +343,49 @@
 .success-text {
   color: #1e8449;
 }
+
+@media (max-width: 1100px) {
+  .page-content {
+    padding: 24px;
+  }
+
+  .two-columns {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .two-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-content {
+    padding: 16px;
+  }
+
+  .greeting-card {
+    padding: 20px;
+  }
+
+  .profile-card {
+    padding: 24px 16px;
+  }
+
+  .password-card {
+    padding: 20px 16px;
+  }
+
+  .dashboard-footer-inner {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 20px;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}

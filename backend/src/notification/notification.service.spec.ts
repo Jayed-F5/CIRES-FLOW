@@ -1,15 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from './notification.gateway';
 import { NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [NotificationService],
-    }).compile();
-
-    service = module.get<NotificationService>(NotificationService);
+  beforeEach(() => {
+    const prisma = {} as PrismaService;
+    const gateway = {} as NotificationGateway;
+    service = new NotificationService(prisma, gateway);
   });
 
   it('should be defined', () => {

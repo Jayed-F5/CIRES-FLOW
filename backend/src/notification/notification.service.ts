@@ -7,40 +7,72 @@ import { NotificationGateway } from './notification.gateway';
 @Injectable()
 export class NotificationService implements OnModuleInit {
   private readonly logger = new Logger(NotificationService.name);
-  private transporter!: nodemailer.Transporter;
+  private transporter?: nodemailer.Transporter;
+  private readonly emailFrom: string;
 
   constructor(
     private prisma: PrismaService,
     private notificationGateway: NotificationGateway,
-  ) {}
+  ) {
+    this.emailFrom = process.env.SMTP_FROM ?? '"Cires Flow" <no-reply@cires-flow.local>';
+  }
 
   async onModuleInit() {
-    const testAccount = await nodemailer.createTestAccount();
+    try {
+      if (process.env.SMTP_HOST) {
+        this.transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
+          secure: process.env.SMTP_SECURE === 'true',
+          auth: process.env.SMTP_USER
+            ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+            : undefined,
+        });
+        this.logger.log(`Serveur SMTP configuré : ${process.env.SMTP_HOST}`);
+        return;
+      }
 
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-
-    this.logger.log(`Compte email de test créé : ${testAccount.user}`);
+      const testAccount = await nodemailer.createTestAccount();
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      this.logger.warn(
+        `Aucun SMTP_HOST configuré — utilisation d'un compte email de test Ethereal : ${testAccount.user}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        "Impossible d'initialiser le transport email — les notifications par email seront désactivées",
+        error,
+      );
+    }
   }
 
   async sendEmail(to: string, subject: string, text: string): Promise<void> {
+    if (!this.transporter) {
+      this.logger.warn(`Email non envoyé à ${to} : aucun transport email disponible`);
+      return;
+    }
+
     try {
       const info = await this.transporter.sendMail({
-        from: '"Cires Flow" <no-reply@cires-flow.local>',
+        from: this.emailFrom,
         to,
         subject,
         text,
       });
 
       const previewUrl = nodemailer.getTestMessageUrl(info);
-      this.logger.log(`Email envoyé à ${to} — aperçu : ${previewUrl}`);
+      if (previewUrl) {
+        this.logger.log(`Email envoyé à ${to} — aperçu : ${previewUrl}`);
+      } else {
+        this.logger.log(`Email envoyé à ${to}`);
+      }
     } catch (error) {
       this.logger.error(`Échec de l'envoi de l'email à ${to}`, error);
     }
@@ -55,15 +87,18 @@ export class NotificationService implements OnModuleInit {
       },
     });
 
-    const user = await this.prisma.utilisateur.findUnique({
-      where: { id: utilisateurId },
-    });
-
-    if (user) {
-      await this.sendEmail(user.email, 'Nouvelle notification - Cires Flow', message);
-    }
-
     this.notificationGateway.sendToUser(utilisateurId, 'notification', notification);
+
+    // L'envoi d'email passe par un aller-retour SMTP externe qui peut prendre
+    // plusieurs secondes — on ne bloque pas le cycle requête/réponse pour ça.
+    this.prisma.utilisateur
+      .findUnique({ where: { id: utilisateurId } })
+      .then((user) => {
+        if (user) {
+          void this.sendEmail(user.email, 'Nouvelle notification - Cires Flow', message);
+        }
+      })
+      .catch((error) => this.logger.error('Échec de la récupération du destinataire de l\'email', error));
 
     return notification;
   }

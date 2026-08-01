@@ -1,28 +1,15 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { DemandeService, Demande } from '../../services/demande.service';
+import { DemandeService, Demande, STATUT_LABELS_DETAIL, SLA_LABELS } from '../../services/demande.service';
+import { DepartementService, Departement, Categorie } from '../../services/departement.service';
 import { AuthService } from '../../services/auth.service';
 import { Header } from '../../shared/header/header';
-import { environment } from '../../../environments/environment';
-import { firstValueFrom } from 'rxjs';
 
-interface Categorie {
-  id: number;
-  nom: string;
-  departementId: number;
-}
-
-interface Departement {
-  id: number;
-  nom: string;
-}
-
-// Statuses considered "still open / needs attention".
+// Statuts considérés comme "encore ouverts / nécessitant une action".
 const OPEN_STATUTS = ['NOUVEAU', 'EN_ATTENTE_APPROBATION', 'EN_COURS'];
 
-// Priority weight for sorting urgency within the queue.
+// Poids de priorité pour trier l'urgence dans la file.
 const SLA_WEIGHT: Record<string, number> = {
   DEPASSE: 0,
   A_RISQUE: 1,
@@ -39,7 +26,7 @@ const SLA_WEIGHT: Record<string, number> = {
 })
 export class FileGestion implements OnInit {
   private demandeService = inject(DemandeService);
-  private http = inject(HttpClient);
+  private departementService = inject(DepartementService);
   authService = inject(AuthService);
 
   loading = signal(true);
@@ -61,24 +48,10 @@ export class FileGestion implements OnInit {
     { value: 'EN_COURS', label: 'En cours' },
   ];
 
-  readonly statutLabels: Record<string, string> = {
-    NOUVEAU: 'NOUVEAU',
-    EN_ATTENTE_APPROBATION: 'EN COURS',
-    EN_COURS: 'EN COURS',
-    RESOLU: 'RESOLU',
-    CLOTURE: 'RESOLU',
-    REJETE: 'REJETE',
-    ANNULE: 'ANNULE',
-  };
+  readonly statutLabels = STATUT_LABELS_DETAIL;
+  readonly slaLabels = SLA_LABELS;
 
-  readonly slaLabels: Record<string, string> = {
-    RESPECTE: 'Respecté',
-    A_RISQUE: 'À risque',
-    DEPASSE: 'Dépassé',
-    NON_APPLICABLE: '—',
-  };
-
-  // Filtered + sorted view: most urgent (SLA dépassé/à risque) first.
+  // Vue filtrée et triée : les plus urgentes (SLA dépassé/à risque) en premier.
   queue = computed(() => {
     let items = this.allOpenDemandes();
 
@@ -109,23 +82,19 @@ export class FileGestion implements OnInit {
 
   async loadDepartements(): Promise<void> {
     try {
-      const depts = await firstValueFrom(
-        this.http.get<Departement[]>(`${environment.apiUrl}/departement`),
-      );
+      const depts = await this.departementService.getDepartements();
       this.departements.set(depts);
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 
   async loadAllCategories(): Promise<void> {
     try {
-      const cats = await firstValueFrom(
-        this.http.get<Categorie[]>(`${environment.apiUrl}/categorie`),
-      );
+      const cats = await this.departementService.getCategories();
       this.allCategories.set(cats);
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 
@@ -141,19 +110,30 @@ export class FileGestion implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      // Pull a large page of open-ish demandes; backend still scopes by role.
-      // We fetch all 3 open statuses in parallel and merge, since the
-      // existing endpoint only accepts a single statut filter at a time.
+      // Le backend filtre déjà par rôle. On récupère les 3 statuts ouverts en
+      // parallèle (l'endpoint n'accepte qu'un seul statut à la fois), en
+      // paginant chacun jusqu'au bout pour ne pas perdre les demandes
+      // au-delà de la première page.
       const results = await Promise.all(
-        OPEN_STATUTS.map((statut) => this.demandeService.getDemandes(1, 100, { statut })),
+        OPEN_STATUTS.map((statut) => this.fetchAllForStatut(statut)),
       );
-      const merged = results.flatMap((r) => r.data);
-      this.allOpenDemandes.set(merged);
+      this.allOpenDemandes.set(results.flat());
     } catch (err) {
       this.error.set('Impossible de charger la file de gestion');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async fetchAllForStatut(statut: string): Promise<Demande[]> {
+    const pageSize = 100;
+    const first = await this.demandeService.getDemandes(1, pageSize, { statut });
+    const all = [...first.data];
+    for (let page = 2; page <= first.totalPages; page++) {
+      const next = await this.demandeService.getDemandes(page, pageSize, { statut });
+      all.push(...next.data);
+    }
+    return all;
   }
 
   onStatutChange(value: string): void {

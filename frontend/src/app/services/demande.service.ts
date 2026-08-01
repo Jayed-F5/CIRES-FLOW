@@ -47,6 +47,44 @@ export interface DemandeListResponse {
   totalPages: number;
 }
 
+// Libellés compacts pour les vues liste (mes-demandes, file-gestion), qui
+// regroupent certains statuts pour un affichage plus simple en un coup d'œil.
+export const STATUT_LABELS: Record<string, string> = {
+  NOUVEAU: 'NOUVEAU',
+  EN_ATTENTE_APPROBATION: 'EN COURS',
+  EN_COURS: 'EN COURS',
+  RESOLU: 'RESOLU',
+  CLOTURE: 'RESOLU',
+  REJETE: 'REJETE',
+  ANNULE: 'ANNULE',
+};
+
+export const SLA_LABELS: Record<string, string> = {
+  RESPECTE: 'Respecté',
+  A_RISQUE: 'À risque',
+  DEPASSE: 'Dépassé',
+  NON_APPLICABLE: '—',
+};
+
+// Libellés détaillés pour la vue détail d'une demande, qui garde chaque
+// statut distinct au lieu de les regrouper.
+export const STATUT_LABELS_DETAIL: Record<string, string> = {
+  NOUVEAU: 'NOUVEAU',
+  EN_ATTENTE_APPROBATION: "EN ATTENTE D'APPROBATION",
+  EN_COURS: 'EN COURS',
+  RESOLU: 'RESOLU',
+  CLOTURE: 'CLOTURE',
+  REJETE: 'REJETE',
+  ANNULE: 'ANNULE',
+};
+
+export const SLA_LABELS_DETAIL: Record<string, string> = {
+  RESPECTE: 'Respecté',
+  A_RISQUE: 'À risque',
+  DEPASSE: 'Dépassé',
+  NON_APPLICABLE: 'Non applicable',
+};
+
 @Injectable({
   providedIn: 'root',
 })

@@ -6,17 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { Header } from '../../shared/header/header';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
-
-interface Departement {
-  id: number;
-  nom: string;
-}
-
-interface Categorie {
-  id: number;
-  nom: string;
-  departementId: number;
-}
+import { DepartementService, Departement, Categorie } from '../../services/departement.service';
 
 @Component({
   selector: 'app-creer-demande',
@@ -28,6 +18,7 @@ interface Categorie {
 export class CreerDemande implements OnInit {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
+  private departementService = inject(DepartementService);
   private router = inject(Router);
 
   departements = signal<Departement[]>([]);
@@ -63,8 +54,8 @@ export class CreerDemande implements OnInit {
 
   async ngOnInit(): Promise<void> {
   const [depts, cats] = await Promise.all([
-    firstValueFrom(this.http.get<Departement[]>(`${environment.apiUrl}/departement`)),
-    firstValueFrom(this.http.get<Categorie[]>(`${environment.apiUrl}/categorie`)),
+    this.departementService.getDepartements(),
+    this.departementService.getCategories(),
   ]);
   this.departements.set(depts);
   this.allCategories.set(cats);

@@ -2,23 +2,23 @@ import { IsEmail, IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-v
 import { Role } from '@prisma/client';
 
 export class CreateUserDto {
-  @IsString()
+  @IsString({ message: 'Le nom est requis.' })
   nom!: string;
 
-  @IsString()
+  @IsString({ message: 'Le prénom est requis.' })
   prenom!: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: "L'adresse email doit être valide." })
   email!: string;
 
-  @IsString()
-  @MinLength(8)
+  @IsString({ message: 'Le mot de passe est requis.' })
+  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères.' })
   motDePasse!: string;
 
-  @IsEnum(Role)
+  @IsEnum(Role, { message: 'Le rôle sélectionné est invalide.' })
   role!: Role;
 
   @IsOptional()
-  @IsInt()
+  @IsInt({ message: 'Le département sélectionné est invalide.' })
   departementId?: number;
 }

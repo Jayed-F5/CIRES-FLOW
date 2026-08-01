@@ -26,15 +26,21 @@ export class NotificationService {
   connect(): void {
     if (this.socket?.connected) return;
 
-    const token = this.authService.getToken();
-    if (!token) return;
+    if (!this.authService.getToken()) return;
 
-    // environment.apiUrl typically ends in something like
-    // http://localhost:3000 or http://localhost:3000/api — socket.io
-    // connects to the server root, not a REST path, so strip any
-    // trailing /api if present.
-    this.socket = io(environment.apiUrl, {
-      auth: { token },
+    // environment.apiUrl peut se terminer par exemple par
+    // http://localhost:3000 ou http://localhost:3000/api — socket.io
+    // se connecte à la racine du serveur, pas à un chemin REST, on
+    // retire donc un éventuel suffixe /api.
+    const socketUrl = environment.apiUrl.replace(/\/api\/?$/, '');
+
+    this.socket = io(socketUrl, {
+      // Une fonction (pas un objet statique) pour que chaque tentative de
+      // connexion — y compris les reconnexions automatiques après un
+      // redémarrage du serveur ou une longue période d'inactivité —
+      // envoie le token actuel plutôt que de rejouer celui capturé au
+      // premier appel de connect().
+      auth: (cb) => cb({ token: this.authService.getToken() }),
       transports: ['websocket'],
     });
 
@@ -64,7 +70,7 @@ export class NotificationService {
       this.notifications.set(list);
       this.unreadCount.set(unread.count);
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 
@@ -78,7 +84,7 @@ export class NotificationService {
       );
       this.unreadCount.update((count) => Math.max(0, count - 1));
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 
@@ -88,7 +94,7 @@ export class NotificationService {
       this.notifications.update((list) => list.map((n) => ({ ...n, lu: true })));
       this.unreadCount.set(0);
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 }

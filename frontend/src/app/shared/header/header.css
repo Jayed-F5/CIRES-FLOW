@@ -9,6 +9,12 @@
   position: relative;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .logo-link {
   display: flex;
   align-items: center;
@@ -117,6 +123,9 @@
 
 .user-menu-wrapper {
   position: relative;
+  height: 64px;
+  display: flex;
+  align-items: center;
 }
 
 .user-badge {
@@ -228,29 +237,53 @@
   margin: 6px 4px;
 }
 
-@media (max-width: 900px) {
-  .main-nav {
-    display: none;
-  }
+.mobile-nav-toggle {
+  display: none;
 }
 
-@media (max-width: 640px) {
-  .app-header {
-    padding: 0 16px;
-  }
-
-  .user-text {
-    display: none;
-  }
-
-  .divider {
-    display: none;
-  }
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 64px 0 0 0;
+  background: rgba(3, 28, 45, 0.4);
+  z-index: 40;
 }
 
+.mobile-nav {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #031c2d;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 2px;
+  z-index: 45;
+  box-shadow: 0 12px 24px rgba(3, 28, 45, 0.25);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.mobile-nav .nav-link {
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.mobile-nav .nav-link::after {
+  display: none;
+}
+
+.mobile-nav .nav-link:hover,
+.mobile-nav .nav-link-active {
+  background-color: rgba(255, 255, 255, 0.08);
+}
 
 .notif-menu-wrapper {
   position: relative;
+  height: 64px;
+  display: flex;
+  align-items: center;
 }
 
 .notif-dropdown {
@@ -361,4 +394,61 @@
   font-family: 'Inter', sans-serif;
   font-size: 11px;
   color: #9aa2ad;
+}
+
+@media (max-width: 1400px) {
+  .main-nav {
+    display: none;
+  }
+
+  .mobile-nav-toggle {
+    display: flex;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 0 12px;
+  }
+
+  .header-left {
+    gap: 8px;
+  }
+
+  .logo-link svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    letter-spacing: -1px;
+  }
+
+  .header-right {
+    gap: 10px;
+  }
+
+  .user-text {
+    display: none;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .notif-dropdown {
+    position: fixed;
+    top: 80px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100vh - 100px);
+  }
+}
+
+@media (max-width: 360px) {
+  .logo-text {
+    display: none;
+  }
 }

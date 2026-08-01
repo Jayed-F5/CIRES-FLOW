@@ -74,10 +74,10 @@
                 </select>
               }
               @if (piecesJointes().length > 0) {
-                <span class="attach-hint">📎 {{ piecesJointes().length }} pièce(s) jointe(s)</span>
+                <span class="attach-hint">{{ piecesJointes().length }} pièce(s) jointe(s)</span>
               }
               <button type="submit" [disabled]="submittingComment()">
-                @if (submittingComment()) { Envoi... } @else { Envoyer } ➤
+                @if (submittingComment()) { Envoi... } @else { Envoyer }
               </button>
             </div>
           </form>
@@ -89,7 +89,7 @@
                 @for (p of piecesJointes(); track p.id) {
                   <li>
                     <button type="button" class="attachment-link" (click)="downloadPieceJointe(p)">
-                      📎 {{ p.nomFichier }}
+                      {{ p.nomFichier }}
                     </button>
                   </li>
                 }
@@ -177,11 +177,11 @@
                   Clôturer la demande
                 </button>
               }
-              @if (demande()!.statut === 'NOUVEAU' || demande()!.statut === 'EN_ATTENTE_APPROBATION') {
-                <button class="secondary-btn danger" [disabled]="changingStatut()" (click)="changeStatut('ANNULE')">
-                  Annuler la demande
-                </button>
-              }
+              @if ((demande()!.statut === 'NOUVEAU' || demande()!.statut === 'EN_ATTENTE_APPROBATION') && canAnnuler()) {
+                  <button class="secondary-btn danger" [disabled]="changingStatut()" (click)="changeStatut('ANNULE')">
+                    Annuler la demande
+                  </button>
+                }
             </div>
 
           </div>

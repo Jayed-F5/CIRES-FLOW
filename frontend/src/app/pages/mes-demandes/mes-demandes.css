@@ -108,6 +108,7 @@
   padding: 8px 24px;
   box-shadow: 0 1px 3px rgba(3, 28, 45, 0.04);
   box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .status-text {
@@ -122,9 +123,11 @@
 }
 
 .demandes-table {
+  min-width: 640px;
   width: 100%;
   border-collapse: collapse;
   font-family: 'Inter', sans-serif;
+  table-layout: fixed;
 }
 
 .demandes-table th {
@@ -137,6 +140,7 @@
   border-bottom: 1px solid #eceef1;
   text-transform: uppercase;
   background-color: #f7f8fa;
+  white-space: nowrap;
 }
 
 .demandes-table td {
@@ -144,12 +148,22 @@
   font-size: 13px;
   color: #031c2d;
   border-bottom: 1px solid #f3f6f8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .id-cell {
   color: #9aa2ad;
   font-weight: 600;
 }
+
+.demandes-table th:nth-child(1) { width: 10%; }
+.demandes-table th:nth-child(2) { width: 28%; }
+.demandes-table th:nth-child(3) { width: 16%; }
+.demandes-table th:nth-child(4) { width: 16%; }
+.demandes-table th:nth-child(5) { width: 16%; }
+.demandes-table th:nth-child(6) { width: 14%; }
 
 .status-badge {
   display: inline-block;
@@ -279,3 +293,71 @@
 
 .clickable-row { cursor: pointer; }
 .clickable-row:hover { background-color: #f5f7fa; }
+
+@media (max-width: 1100px) {
+  .page-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 780px) {
+  .filters-row {
+    flex-wrap: wrap;
+  }
+
+  .search-wrapper {
+    flex-basis: 100%;
+  }
+
+  .filter-select {
+    flex: 1;
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-content {
+    padding: 16px;
+  }
+
+  .greeting-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .new-btn {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .filters-row {
+    gap: 10px;
+  }
+
+  .filter-select {
+    flex-basis: 100%;
+  }
+
+  .table-card {
+    padding: 8px 16px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-footer-inner {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 20px;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}

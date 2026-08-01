@@ -143,3 +143,20 @@
     </div>
   </div>
 }
+@if (showConfirmModal()) {
+  <div class="modal-overlay" (click)="closeConfirmModal()">
+    <div class="modal confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>Confirmation</h2>
+      <p class="status-text confirm-message">{{ confirmMessage() }}</p>
+      <div class="modal-actions">
+        <a class="cancel-btn" (click)="closeConfirmModal()">Annuler</a>
+        <button class="submit-btn confirm-danger-btn" (click)="confirmYes()">Confirmer</button>
+      </div>
+    </div>
+  </div>
+}

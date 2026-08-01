@@ -81,91 +81,132 @@ export class WorkflowService {
       );
     }
 
-    await this.prisma.approbation.update({
-      where: { id: approbationId },
-      data: {
-        statut: dto.statut,
-        commentaire: dto.commentaire,
-        date: new Date(),
-        approbateurId: user.userId,
-      },
-    });
-
-    await this.historiqueService.logAction(
-      approbation.demandeId,
-      user.userId,
-      `APPROBATION:etape_${approbation.etape.ordre}:${dto.statut}`,
-    );
-
-    if (dto.statut === StatutApprobation.REJETE) {
-      const demande = await this.prisma.demande.update({
-        where: { id: approbation.demandeId },
-        data: { statut: StatutDemande.REJETE },
-      });
-
-      await this.historiqueService.logAction(
-        approbation.demandeId,
-        user.userId,
-        `CHANGEMENT_STATUT:${approbation.demande.statut}->REJETE`,
-      );
-
-      await this.notificationService.notify(
-        approbation.demande.demandeurId,
-        `Votre demande #${approbation.demandeId} "${approbation.demande.titre}" a été rejetée`,
-        `/demande/${approbation.demandeId}`,
-      );
-
-      return demande;
+    if (user.role === Role.AGENT && approbation.demande.departementId !== user.departementId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
     }
 
-    const prochaineEtape = await this.prisma.workflowEtape.findFirst({
-      where: {
-        categorieId: approbation.demande.categorieId,
-        ordre: { gt: approbation.etape.ordre },
-      },
-      orderBy: { ordre: 'asc' },
-    });
+    let sendNotification: (() => Promise<unknown>) | undefined;
 
-    if (prochaineEtape) {
-      await this.prisma.approbation.create({
+    const demande = await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.approbation.updateMany({
+        where: { id: approbationId, statut: StatutApprobation.EN_ATTENTE },
         data: {
-          demandeId: approbation.demandeId,
-          etapeId: prochaineEtape.id,
-          statut: StatutApprobation.EN_ATTENTE,
+          statut: dto.statut,
+          commentaire: dto.commentaire,
+          date: new Date(),
+          approbateurId: user.userId,
         },
       });
 
-      await this.notificationService.notifyByRole(
-        prochaineEtape.roleApprobateur,
-        approbation.demande.departementId,
-        `Une demande #${approbation.demandeId} "${approbation.demande.titre}" attend votre approbation`,
-        `/demande/${approbation.demandeId}`,
-      );
+      if (count === 0) {
+        throw new BadRequestException('Cette étape a déjà été traitée');
+      }
 
-      return this.prisma.demande.findUnique({ where: { id: approbation.demandeId } });
-    }
+      await tx.historiqueAction.create({
+        data: {
+          demandeId: approbation.demandeId,
+          auteurId: user.userId,
+          action: `APPROBATION:etape_${approbation.etape.ordre}:${dto.statut}`,
+        },
+      });
 
-    const demande = await this.prisma.demande.update({
-      where: { id: approbation.demandeId },
-      data: { statut: StatutDemande.EN_COURS },
+      if (dto.statut === StatutApprobation.REJETE) {
+        const updated = await tx.demande.update({
+          where: { id: approbation.demandeId },
+          data: { statut: StatutDemande.REJETE },
+        });
+
+        await tx.historiqueAction.create({
+          data: {
+            demandeId: approbation.demandeId,
+            auteurId: user.userId,
+            action: `CHANGEMENT_STATUT:${approbation.demande.statut}->REJETE`,
+          },
+        });
+
+        sendNotification = () =>
+          this.notificationService.notify(
+            approbation.demande.demandeurId,
+            `Votre demande #${approbation.demandeId} "${approbation.demande.titre}" a été rejetée`,
+            `/demande/${approbation.demandeId}`,
+          );
+
+        return updated;
+      }
+
+      const prochaineEtape = await tx.workflowEtape.findFirst({
+        where: {
+          categorieId: approbation.demande.categorieId,
+          ordre: { gt: approbation.etape.ordre },
+        },
+        orderBy: { ordre: 'asc' },
+      });
+
+      if (prochaineEtape) {
+        await tx.approbation.create({
+          data: {
+            demandeId: approbation.demandeId,
+            etapeId: prochaineEtape.id,
+            statut: StatutApprobation.EN_ATTENTE,
+          },
+        });
+
+        sendNotification = () =>
+          this.notificationService.notifyByRole(
+            prochaineEtape.roleApprobateur,
+            approbation.demande.departementId,
+            `Une demande #${approbation.demandeId} "${approbation.demande.titre}" attend votre approbation`,
+            `/demande/${approbation.demandeId}`,
+          );
+
+        return tx.demande.findUnique({ where: { id: approbation.demandeId } });
+      }
+
+      const updated = await tx.demande.update({
+        where: { id: approbation.demandeId },
+        data: { statut: StatutDemande.EN_COURS },
+      });
+
+      await tx.historiqueAction.create({
+        data: {
+          demandeId: approbation.demandeId,
+          auteurId: user.userId,
+          action: `CHANGEMENT_STATUT:${approbation.demande.statut}->EN_COURS`,
+        },
+      });
+
+      sendNotification = () =>
+        this.notificationService.notify(
+          approbation.demande.demandeurId,
+          `Votre demande #${approbation.demandeId} "${approbation.demande.titre}" est maintenant en cours de traitement`,
+          `/demande/${approbation.demandeId}`,
+        );
+
+      return updated;
     });
 
-    await this.historiqueService.logAction(
-      approbation.demandeId,
-      user.userId,
-      `CHANGEMENT_STATUT:${approbation.demande.statut}->EN_COURS`,
-    );
-
-    await this.notificationService.notify(
-      approbation.demande.demandeurId,
-      `Votre demande #${approbation.demandeId} "${approbation.demande.titre}" est maintenant en cours de traitement`,
-      `/demande/${approbation.demandeId}`,
-    );
+    await sendNotification?.();
 
     return demande;
   }
 
-  async findByDemande(demandeId: number) {
+  async findByDemande(demandeId: number, user: CurrentUser) {
+    const demande = await this.prisma.demande.findUnique({
+      where: { id: demandeId },
+    });
+
+    if (!demande) {
+      throw new NotFoundException('Demande non trouvée');
+    }
+
+    if (user.role === Role.EMPLOYE && demande.demandeurId !== user.userId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
+    }
+
+    if (user.role === Role.AGENT && demande.departementId !== user.departementId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
+    }
+
     return this.prisma.approbation.findMany({
       where: { demandeId },
       include: { etape: true },

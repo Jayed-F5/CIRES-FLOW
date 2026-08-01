@@ -26,20 +26,17 @@
       <option [value]="opt.value">{{ opt.label }}</option>
     }
   </select>
-  @if (isAdmin()) {
-    <select class="filter-select" [value]="selectedDepartementId()" (change)="onDepartementChange($any($event.target).value)">
-      <option value="">Tous les Départements</option>
-      @for (dept of departements(); track dept.id) {
-        <option [value]="dept.id">{{ dept.nom }}</option>
-      }
-    </select>
+  <select class="filter-select" [value]="selectedDepartementId()" (change)="onDepartementChange($any($event.target).value)">
+  <option value="">Tous les Départements</option>
+  @for (dept of departements(); track dept.id) {
+    <option [value]="dept.id">{{ dept.nom }}</option>
   }
+</select>
   <select
   class="filter-select"
   [value]="selectedCategorieId()"
   (change)="onCategorieChange($any($event.target).value)"
-  [disabled]="isAdmin() && !selectedDepartementId()"
->
+[disabled]="!selectedDepartementId()">
   <option value="">Toutes les Catégories</option>
   @for (cat of filteredCategories(); track cat.id) {
     <option [value]="cat.id">{{ cat.nom }}</option>

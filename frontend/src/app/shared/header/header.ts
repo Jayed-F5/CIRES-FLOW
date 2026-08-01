@@ -14,6 +14,8 @@ import {
   LucideUsers,
   LucideBuilding2,
   LucideWorkflow,
+  LucideMenu,
+  LucideX,
 } from '@lucide/angular';
 @Component({
   selector: 'app-header',
@@ -31,7 +33,9 @@ imports: [
   LucideListChecks,
   LucideUsers,
   LucideBuilding2,
-  LucideWorkflow
+  LucideWorkflow,
+  LucideMenu,
+  LucideX
 ],
   templateUrl: './header.html',
   styleUrl: './header.css',
@@ -44,6 +48,7 @@ export class Header {
 
   menuOpen = signal(false);
   notifMenuOpen = signal(false);
+  mobileNavOpen = signal(false);
 
   constructor() {
     if (this.authService.isAuthenticated()) {
@@ -80,7 +85,10 @@ return links;
   }
 
   get displayName(): string {
-    // TODO: replace with real nom/prenom from GET /auth/me after login.
+    const user = this.authService.user();
+    if (user?.prenom && user?.nom) {
+      return `${user.prenom} ${user.nom}`;
+    }
     return this.roleLabel;
   }
 
@@ -98,6 +106,16 @@ return links;
   toggleMenu(): void {
     this.menuOpen.update((v) => !v);
     this.notifMenuOpen.set(false);
+  }
+
+  toggleMobileNav(): void {
+    this.mobileNavOpen.update((v) => !v);
+    this.menuOpen.set(false);
+    this.notifMenuOpen.set(false);
+  }
+
+  closeMobileNav(): void {
+    this.mobileNavOpen.set(false);
   }
 
   closeMenu(): void {
@@ -139,6 +157,7 @@ return links;
 
   logout(): void {
     this.closeMenu();
+    this.notificationService.disconnect();
     this.authService.logout();
   }
 
@@ -147,6 +166,7 @@ return links;
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.closeMenu();
       this.closeNotifMenu();
+      this.closeMobileNav();
     }
   }
 }

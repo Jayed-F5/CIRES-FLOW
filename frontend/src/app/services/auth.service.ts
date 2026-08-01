@@ -80,6 +80,26 @@ export class AuthService {
       role: payload.role,
       departementId: payload.departementId,
     });
+
+    this.loadProfile();
+  }
+
+  private async loadProfile(): Promise<void> {
+    try {
+      const me = await this.getMe();
+      const current = this.userSignal();
+      if (!current) return;
+
+      this.userSignal.set({
+        ...current,
+        nom: me.nom,
+        prenom: me.prenom,
+        email: me.email,
+      });
+    } catch {
+      // Échec de la récupération du profil (ex. token expiré) — l'intercepteur
+      // d'erreurs gère déjà les 401 ; on conserve les infos partielles issues du JWT telles quelles.
+    }
   }
 
   private decodeToken(token: string): JwtPayload | null {

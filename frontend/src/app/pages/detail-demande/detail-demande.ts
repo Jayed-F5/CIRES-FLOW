@@ -3,7 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { DemandeService, DemandeDetail, StatutDemande } from '../../services/demande.service';
+import {
+  DemandeService,
+  DemandeDetail,
+  StatutDemande,
+  STATUT_LABELS_DETAIL,
+  SLA_LABELS_DETAIL,
+} from '../../services/demande.service';
+import { DepartementService } from '../../services/departement.service';
 import { AuthService } from '../../services/auth.service';
 import { Header } from '../../shared/header/header';
 import { environment } from '../../../environments/environment';
@@ -63,6 +70,7 @@ export class DetailDemande implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private demandeService = inject(DemandeService);
+  private departementService = inject(DepartementService);
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   authService = inject(AuthService);
@@ -91,25 +99,11 @@ export class DetailDemande implements OnInit {
     visibilite: ['PUBLIC' as 'PUBLIC' | 'INTERNE'],
   });
 
-  readonly statutLabels: Record<string, string> = {
-    NOUVEAU: 'NOUVEAU',
-    EN_ATTENTE_APPROBATION: "EN ATTENTE D'APPROBATION",
-    EN_COURS: 'EN COURS',
-    RESOLU: 'RESOLU',
-    CLOTURE: 'CLOTURE',
-    REJETE: 'REJETE',
-    ANNULE: 'ANNULE',
-  };
+  readonly statutLabels = STATUT_LABELS_DETAIL;
+  readonly slaLabels = SLA_LABELS_DETAIL;
 
-  readonly slaLabels: Record<string, string> = {
-    RESPECTE: 'Respecté',
-    A_RISQUE: 'À risque',
-    DEPASSE: 'Dépassé',
-    NON_APPLICABLE: 'Non applicable',
-  };
-
-  // Ordered list of workflow steps merged with their approbation status,
-  // for the "Circuit d'approbation" panel.
+  // Liste ordonnée des étapes du circuit fusionnées avec leur statut
+  // d'approbation, pour le panneau "Circuit d'approbation".
   circuitEtapes = computed(() => {
     return [...this.approbations()].sort((a, b) => a.etape.ordre - b.etape.ordre);
   });
@@ -127,8 +121,14 @@ export class DetailDemande implements OnInit {
 
   canWriteInterne = computed(() => this.currentRole() !== 'EMPLOYE');
   canProgressStatut = computed(() => this.currentRole() !== 'EMPLOYE');
-
-  // SLA time remaining, roughly, for display purposes only.
+  canAnnuler = computed(() => {
+  const d = this.demande();
+  const userId = this.currentUserId();
+  const role = this.currentRole();
+  if (!d) return false;
+  return role === 'ADMIN' || d.demandeur.id === userId;
+});
+  // Temps restant avant dépassement du SLA, approximatif, à titre d'affichage uniquement.
   slaTimeRemaining = computed(() => {
     const d = this.demande();
     if (!d || !d.dateLimiteSLA) return null;
@@ -140,13 +140,13 @@ export class DetailDemande implements OnInit {
     return `${minutes} min`;
   });
 
-  // Merges comments + historique events into one chronological feed.
+  // Fusionne les commentaires et les événements de l'historique en un seul flux chronologique.
   timeline = computed<TimelineEvent[]>(() => {
     const events: TimelineEvent[] = [];
 
     for (const h of this.historique()) {
-      // Skip raw comment-log entries; the actual comment content is
-      // already rendered from the commentaires list below.
+      // Ignore les entrées brutes de journal de commentaire ; le contenu du
+      // commentaire est déjà rendu à partir de la liste des commentaires ci-dessous.
       if (h.action.startsWith('COMMENTAIRE')) continue;
       events.push({ type: 'event', date: h.date, text: this.describeAction(h.action) });
     }
@@ -194,13 +194,13 @@ export class DetailDemande implements OnInit {
   private async loadLookups(): Promise<void> {
     try {
       const [depts, cats] = await Promise.all([
-        firstValueFrom(this.http.get<{ id: number; nom: string }[]>(`${environment.apiUrl}/departement`)),
-        firstValueFrom(this.http.get<{ id: number; nom: string }[]>(`${environment.apiUrl}/categorie`)),
+        this.departementService.getDepartements(),
+        this.departementService.getCategories(),
       ]);
       this.departements.set(depts);
       this.categories.set(cats);
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 

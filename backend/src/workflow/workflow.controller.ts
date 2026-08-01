@@ -36,8 +36,8 @@ export class WorkflowController {
   }
   @UseGuards(JwtAuthGuard)
   @Get('demande/:demandeId/approbations')
-  findByDemande(@Param('demandeId', ParseIntPipe) demandeId: number) {
-    return this.workflowService.findByDemande(demandeId);
+  findByDemande(@Param('demandeId', ParseIntPipe) demandeId: number, @Req() req: any) {
+    return this.workflowService.findByDemande(demandeId, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

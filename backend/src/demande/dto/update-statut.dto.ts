@@ -2,6 +2,6 @@ import { IsEnum } from 'class-validator';
 import { StatutDemande } from '@prisma/client';
 
 export class UpdateStatutDto {
-  @IsEnum(StatutDemande)
+  @IsEnum(StatutDemande, { message: 'Le statut fourni est invalide.' })
   statut!: StatutDemande;
 }

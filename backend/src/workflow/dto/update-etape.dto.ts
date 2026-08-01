@@ -3,11 +3,11 @@ import { Role } from '@prisma/client';
 
 export class UpdateEtapeDto {
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: "L'ordre doit être un nombre entier." })
+  @Min(1, { message: "L'ordre doit être supérieur ou égal à 1." })
   ordre?: number;
 
   @IsOptional()
-  @IsEnum(Role)
+  @IsEnum(Role, { message: 'Le rôle approbateur sélectionné est invalide.' })
   roleApprobateur?: Role;
 }

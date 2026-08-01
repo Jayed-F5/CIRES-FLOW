@@ -27,7 +27,7 @@ export class SlaService {
     });
 
     for (const demande of demandesOuvertes) {
-      // --- Clock 1: résolution (delaiResolution) ---
+      // --- Horloge 1 : résolution (delaiResolution) ---
       if (demande.dateLimiteSLA) {
         const estDepassee = demande.dateLimiteSLA < now;
         const estARisque = !estDepassee && demande.dateLimiteSLA < seuilRisque;
@@ -61,7 +61,7 @@ export class SlaService {
         }
       }
 
-      // --- Clock 2: réponse (delaiReponse) — seulement si pas encore répondu ---
+      // --- Horloge 2 : réponse (delaiReponse) — seulement si pas encore répondu ---
       if (demande.dateLimiteReponse && !demande.dateReponse) {
         const estDepassee = demande.dateLimiteReponse < now;
         const estARisque = !estDepassee && demande.dateLimiteReponse < seuilRisque;

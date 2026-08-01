@@ -1,24 +1,11 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { DemandeService, Demande } from '../../services/demande.service';
+import { DemandeService, Demande, STATUT_LABELS_DETAIL, SLA_LABELS } from '../../services/demande.service';
+import { DepartementService, Departement, Categorie } from '../../services/departement.service';
 import { AuthService } from '../../services/auth.service';
 import { Header } from '../../shared/header/header';
 import { LucideSearch } from '@lucide/angular';
-import { environment } from '../../../environments/environment';
-import { firstValueFrom } from 'rxjs';
-
-interface Categorie {
-  id: number;
-  nom: string;
-  departementId: number;
-}
-
-interface Departement {
-  id: number;
-  nom: string;
-}
 
 @Component({
   selector: 'app-mes-demandes',
@@ -29,7 +16,7 @@ interface Departement {
 })
 export class MesDemandes implements OnInit {
   private demandeService = inject(DemandeService);
-  private http = inject(HttpClient);
+  private departementService = inject(DepartementService);
   authService = inject(AuthService);
 
   loading = signal(true);
@@ -47,20 +34,19 @@ export class MesDemandes implements OnInit {
   selectedDepartementId = signal('');
   selectedCategorieId = signal('');
 
-  isAdmin = computed(() => this.authService.user()?.role === 'ADMIN');
-
-  // Category dropdown: for Admin, scoped to whichever département is
-  // selected. For everyone else, shows only categories that actually
-  // appear in their own (already backend-scoped) results.
+isAdmin = computed(() => this.authService.user()?.role === 'ADMIN');
+canFilterByDepartement = computed(() => {
+  const role = this.authService.user()?.role;
+  return role === 'ADMIN' || role === 'MANAGER';
+});
+  // Liste déroulante des catégories : pour un Admin, limitée au département
+  // sélectionné. Pour les autres rôles, n'affiche que les catégories qui
+  // apparaissent réellement dans leurs propres résultats (déjà filtrés côté backend).
   filteredCategories = computed(() => {
-    if (this.isAdmin()) {
-      const deptId = this.selectedDepartementId();
-      if (!deptId) return [];
-      return this.allCategories().filter((c) => c.departementId === Number(deptId));
-    }
-    const usedIds = new Set(this.demandes().map((d) => d.categorieId));
-    return this.allCategories().filter((c) => usedIds.has(c.id));
-  });
+  const deptId = this.selectedDepartementId();
+  if (!deptId) return [];
+  return this.allCategories().filter((c) => c.departementId === Number(deptId));
+});
 
   readonly statutOptions = [
     { value: '', label: 'Tous les Statuts' },
@@ -78,22 +64,8 @@ export class MesDemandes implements OnInit {
     return Array.from({ length: total }, (_, i) => i + 1);
   });
 
-  readonly statutLabels: Record<string, string> = {
-    NOUVEAU: 'NOUVEAU',
-    EN_ATTENTE_APPROBATION: 'EN COURS',
-    EN_COURS: 'EN COURS',
-    RESOLU: 'RESOLU',
-    CLOTURE: 'RESOLU',
-    REJETE: 'REJETE',
-    ANNULE: 'ANNULE',
-  };
-
-  readonly slaLabels: Record<string, string> = {
-    RESPECTE: 'Respecté',
-    A_RISQUE: 'À risque',
-    DEPASSE: 'Dépassé',
-    NON_APPLICABLE: '—',
-  };
+readonly statutLabels = STATUT_LABELS_DETAIL;
+  readonly slaLabels = SLA_LABELS;
 
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
@@ -104,23 +76,19 @@ export class MesDemandes implements OnInit {
 
   async loadDepartements(): Promise<void> {
     try {
-      const depts = await firstValueFrom(
-        this.http.get<Departement[]>(`${environment.apiUrl}/departement`),
-      );
+      const depts = await this.departementService.getDepartements();
       this.departements.set(depts);
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 
   async loadAllCategories(): Promise<void> {
     try {
-      const cats = await firstValueFrom(
-        this.http.get<Categorie[]>(`${environment.apiUrl}/categorie`),
-      );
+      const cats = await this.departementService.getCategories();
       this.allCategories.set(cats);
     } catch {
-      // non-blocking
+      // non bloquant
     }
   }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
 import { calculerIndicateurSLA } from '../demande/demande.service';
@@ -18,6 +18,11 @@ export class DashboardService {
       return { demandeurId: user.userId };
     }
     if (user.role === Role.AGENT || user.role === Role.MANAGER) {
+      if (user.departementId === null) {
+        throw new BadRequestException(
+          "Votre compte n'est rattaché à aucun département : impossible de calculer les statistiques",
+        );
+      }
       return { departementId: user.departementId };
     }
     return {};

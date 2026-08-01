@@ -3,10 +3,10 @@ import { Role } from '@prisma/client';
 
 export class UpdateUserDto {
   @IsOptional()
-  @IsEnum(Role)
+  @IsEnum(Role, { message: 'Le rôle sélectionné est invalide.' })
   role?: Role;
 
   @IsOptional()
-  @IsInt()
+  @IsInt({ message: 'Le département sélectionné est invalide.' })
   departementId?: number;
 }

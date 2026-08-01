@@ -74,6 +74,10 @@
   .detail-grid {
     grid-template-columns: 1fr;
   }
+
+  .side-col {
+    position: static;
+  }
 }
 
 .main-col {
@@ -81,7 +85,7 @@
   flex-direction: column;
 }
 
-/* Description box */
+/* Bloc description */
 .description-box {
   background: #ffffff;
   border: 1px solid #e9f0f2;
@@ -106,7 +110,7 @@
   margin: 0 0 16px;
 }
 
-/* Timeline */
+/* Chronologie */
 .timeline {
   display: flex;
   flex-direction: column;
@@ -189,7 +193,7 @@
   line-height: 1.6;
 }
 
-/* Comment form */
+/* Formulaire de commentaire */
 .comment-form {
   background: #ffffff;
   border: 1px solid #e9f0f2;
@@ -251,7 +255,7 @@
 .comment-form-row button:hover { background: #0a2f47; }
 .comment-form-row button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Attachments inline (main column) */
+/* Pièces jointes en ligne (colonne principale) */
 .attachments-inline {
   margin-bottom: 24px;
 }
@@ -282,7 +286,7 @@
   background: #f7f8fa;
 }
 
-/* Sidebar */
+/* Barre latérale */
 .side-col {
   display: flex;
   flex-direction: column;
@@ -416,7 +420,7 @@
 .circuit-sub-rejected { color: #ff6b5e; }
 .circuit-sub-pending { color: #ffaa01; font-weight: 700; letter-spacing: 0.3px; }
 
-/* Sidebar actions */
+/* Actions de la barre latérale */
 .sidebar-actions {
   display: flex;
   gap: 10px;
@@ -454,7 +458,7 @@
   cursor: not-allowed;
 }
 
-/* Statut actions (secondary, below approve/reject) */
+/* Actions de statut (secondaires, sous approuver/rejeter) */
 .statut-actions {
   display: flex;
   flex-direction: column;
@@ -491,7 +495,7 @@
   cursor: not-allowed;
 }
 
-/* Reference card */
+/* Carte de référence */
 .reference-card {
   background: #ffffff;
   border: 1px solid #e9f0f2;
@@ -528,3 +532,50 @@
   color: #9aa2ad;
   box-sizing: border-box;
 }
+
+@media (max-width: 900px) {
+  .page-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-content {
+    padding: 16px;
+  }
+
+  .ticket-title {
+    font-size: 20px;
+  }
+
+  .meta-row {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .meta-sep {
+    display: none;
+  }
+
+  .description-box,
+  .comment-form,
+  .sidebar-card,
+  .reference-card {
+    padding: 16px;
+  }
+
+  .comment-form-row {
+    flex-wrap: wrap;
+  }
+
+  .comment-form-row button {
+    margin-left: 0;
+    width: 100%;
+    order: 1;
+  }
+
+  .dashboard-footer-inner {
+    padding: 16px 20px;
+  }
+}
+

@@ -1,15 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { WorkflowController } from './workflow.controller';
+import { WorkflowService } from './workflow.service';
 
 describe('WorkflowController', () => {
   let controller: WorkflowController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [WorkflowController],
-    }).compile();
-
-    controller = module.get<WorkflowController>(WorkflowController);
+  beforeEach(() => {
+    const workflowService = {} as WorkflowService;
+    controller = new WorkflowController(workflowService);
   });
 
   it('should be defined', () => {

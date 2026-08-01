@@ -147,6 +147,7 @@ model Commentaire {
   visibilite VisibiliteCommentaire
   date       DateTime @default(now())
 
+  @@index([demandeId])
   @@map("commentaires")
 }
 
@@ -158,6 +159,7 @@ model PieceJointe {
   cheminFichier String
   dateUpload    DateTime @default(now())
 
+  @@index([demandeId])
   @@map("pieces_jointes")
 }
 
@@ -170,6 +172,7 @@ model HistoriqueAction {
   action    String
   date      DateTime @default(now())
 
+  @@index([demandeId])
   @@map("historique_actions")
 }
 
@@ -198,6 +201,8 @@ model Approbation {
   date          DateTime?
   commentaire   String?
 
+  @@index([demandeId])
+  @@index([etapeId])
   @@map("approbations")
 }
 
@@ -210,5 +215,6 @@ model Notification {
   lu            Boolean  @default(false)
   date          DateTime @default(now())
 
+  @@index([utilisateurId])
   @@map("notifications")
 }

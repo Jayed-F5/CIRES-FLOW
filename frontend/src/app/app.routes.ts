@@ -18,7 +18,11 @@ export const routes: Routes = [
   { path: 'mes-demandes', component: MesDemandes, canActivate: [authGuard] },
   { path: 'creer-demande', component: CreerDemande, canActivate: [authGuard] },
   { path: 'demande/:id', component: DetailDemande, canActivate: [authGuard] },
-  { path: 'file-gestion', component: FileGestion, canActivate: [authGuard] },
+  {
+    path: 'file-gestion',
+    component: FileGestion,
+    canActivate: [authGuard, roleGuard(['AGENT', 'MANAGER', 'ADMIN'])],
+  },
   {
   path: 'mon-compte',
   component: MonCompte,

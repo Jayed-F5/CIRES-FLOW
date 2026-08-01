@@ -106,30 +106,44 @@ export class DemandeService {
       Date.now() + categorie.delaiReponse * multiplicateur * 60 * 60 * 1000,
     );
 
-    const demande = await this.prisma.demande.create({
-      data: {
-        titre: dto.titre,
-        description: dto.description,
-        priorite: dto.priorite,
-        departementId: dto.departementId,
-        categorieId: dto.categorieId,
-        demandeurId,
-        metadata: dto.metadata,
-        statut: statutInitial,
-        dateLimiteSLA,
-        dateLimiteReponse,
-      },
-    });
-
-    if (premiereEtape) {
-      await this.prisma.approbation.create({
+    const demande = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.demande.create({
         data: {
-          demandeId: demande.id,
-          etapeId: premiereEtape.id,
-          statut: 'EN_ATTENTE',
+          titre: dto.titre,
+          description: dto.description,
+          priorite: dto.priorite,
+          departementId: dto.departementId,
+          categorieId: dto.categorieId,
+          demandeurId,
+          metadata: dto.metadata,
+          statut: statutInitial,
+          dateLimiteSLA,
+          dateLimiteReponse,
         },
       });
 
+      if (premiereEtape) {
+        await tx.approbation.create({
+          data: {
+            demandeId: created.id,
+            etapeId: premiereEtape.id,
+            statut: 'EN_ATTENTE',
+          },
+        });
+      }
+
+      await tx.historiqueAction.create({
+        data: {
+          demandeId: created.id,
+          auteurId: demandeurId,
+          action: 'CREATION',
+        },
+      });
+
+      return created;
+    });
+
+    if (premiereEtape) {
       await this.notificationService.notifyByRole(
         premiereEtape.roleApprobateur,
         demande.departementId,
@@ -137,8 +151,6 @@ export class DemandeService {
         `/demande/${demande.id}`,
       );
     }
-
-    await this.historiqueService.logAction(demande.id, demandeurId, 'CREATION');
 
     await this.notificationService.notify(
       demandeurId,
@@ -274,16 +286,28 @@ export class DemandeService {
       data.dateCloture = new Date();
     }
 
-    const updated = await this.prisma.demande.update({
-      where: { id },
-      data,
-    });
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.demande.updateMany({
+        where: { id, statut: demande.statut },
+        data,
+      });
 
-    await this.historiqueService.logAction(
-      id,
-      user.userId,
-      `CHANGEMENT_STATUT:${demande.statut}->${dto.statut}`,
-    );
+      if (count === 0) {
+        throw new BadRequestException(
+          'Cette demande a déjà été modifiée entretemps, veuillez réessayer',
+        );
+      }
+
+      await tx.historiqueAction.create({
+        data: {
+          demandeId: id,
+          auteurId: user.userId,
+          action: `CHANGEMENT_STATUT:${demande.statut}->${dto.statut}`,
+        },
+      });
+
+      return tx.demande.findUniqueOrThrow({ where: { id } });
+    });
 
     if (demande.demandeurId !== user.userId) {
       await this.notificationService.notify(

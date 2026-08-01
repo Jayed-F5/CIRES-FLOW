@@ -1,16 +1,32 @@
 <header class="app-header">
-  <a routerLink="/dashboard" class="logo-link">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
-      <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
-      <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67" 
-            fill="none" 
-            stroke="#ffffff" 
-            stroke-width="3.6" 
-            stroke-linecap="round" 
-            stroke-linejoin="round" />
-    </svg>
-    <span class="logo-text">CIRES FLOW</span>
-  </a>
+  <div class="header-left">
+    <button
+      class="icon-btn mobile-nav-toggle"
+      type="button"
+      aria-label="Menu"
+      [attr.aria-expanded]="mobileNavOpen()"
+      (click)="toggleMobileNav()"
+    >
+      @if (mobileNavOpen()) {
+        <svg lucideX [size]="22"></svg>
+      } @else {
+        <svg lucideMenu [size]="22"></svg>
+      }
+    </button>
+
+    <a routerLink="/dashboard" class="logo-link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+        <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
+        <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="3.6"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+      </svg>
+      <span class="logo-text">CIRES FLOW</span>
+    </a>
+  </div>
 
   <nav class="main-nav">
     @for (link of navLinks; track link.path) {
@@ -29,6 +45,7 @@
   </nav>
 
   <div class="header-right">
+
     <div class="notif-menu-wrapper">
       <button class="icon-btn" aria-label="Notifications" (click)="toggleNotifMenu()">
         <svg lucideBell [size]="20"></svg>
@@ -104,4 +121,29 @@
       }
     </div>
   </div>
+
+  @if (mobileNavOpen()) {
+    <div class="mobile-nav-backdrop" (click)="closeMobileNav()"></div>
+    <nav class="mobile-nav">
+      @for (link of navLinks; track link.path) {
+        <a
+          [routerLink]="link.path"
+          routerLinkActive="nav-link-active"
+          class="nav-link"
+          (click)="closeMobileNav()"
+        >
+          @switch (link.icon) {
+            @case ('dashboard') { <svg lucideLayoutDashboard [size]="18"></svg> }
+            @case ('demandes') { <svg lucideClipboardList [size]="18"></svg> }
+            @case ('nouvelle') { <svg lucideFilePlus [size]="18"></svg> }
+            @case ('file') { <svg lucideListChecks [size]="18"></svg> }
+            @case ('users') { <svg lucideUsers [size]="18"></svg> }
+            @case ('departements') { <svg lucideBuilding2 [size]="18"></svg> }
+            @case ('workflow') { <svg lucideWorkflow [size]="18"></svg> }
+          }
+          <span>{{ link.label }}</span>
+        </a>
+      }
+    </nav>
+  }
 </header>

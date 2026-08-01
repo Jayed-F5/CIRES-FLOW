@@ -44,6 +44,60 @@ export class GestionDepartements implements OnInit {
     this.departements().find((d) => d.id === this.selectedDepartementId()) ?? null,
   );
 
+  // --- Pagination Départements ---
+  readonly deptPageSize = 5;
+  deptCurrentPage = signal(1);
+  deptTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.departements().length / this.deptPageSize)),
+  );
+  deptPageNumbers = computed(() =>
+    Array.from({ length: this.deptTotalPages() }, (_, i) => i + 1),
+  );
+  paginatedDepartements = computed(() => {
+    const start = (this.deptCurrentPage() - 1) * this.deptPageSize;
+    return this.departements().slice(start, start + this.deptPageSize);
+  });
+
+  goToDeptPage(page: number): void {
+    if (page < 1 || page > this.deptTotalPages()) return;
+    this.deptCurrentPage.set(page);
+  }
+
+  nextDeptPage(): void {
+    this.goToDeptPage(this.deptCurrentPage() + 1);
+  }
+
+  previousDeptPage(): void {
+    this.goToDeptPage(this.deptCurrentPage() - 1);
+  }
+
+  // --- Pagination Catégories ---
+  readonly catPageSize = 6;
+  catCurrentPage = signal(1);
+  catTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.categoriesForSelected().length / this.catPageSize)),
+  );
+  catPageNumbers = computed(() =>
+    Array.from({ length: this.catTotalPages() }, (_, i) => i + 1),
+  );
+  paginatedCategories = computed(() => {
+    const start = (this.catCurrentPage() - 1) * this.catPageSize;
+    return this.categoriesForSelected().slice(start, start + this.catPageSize);
+  });
+
+  goToCatPage(page: number): void {
+    if (page < 1 || page > this.catTotalPages()) return;
+    this.catCurrentPage.set(page);
+  }
+
+  nextCatPage(): void {
+    this.goToCatPage(this.catCurrentPage() + 1);
+  }
+
+  previousCatPage(): void {
+    this.goToCatPage(this.catCurrentPage() - 1);
+  }
+
   // --- Modales Département ---
   showDeptModal = signal(false);
   editingDeptId = signal<number | null>(null);
@@ -58,6 +112,28 @@ export class GestionDepartements implements OnInit {
   catSubmitting = signal(false);
   catError = signal<string | null>(null);
 
+  // --- Modale de confirmation ---
+showConfirmModal = signal(false);
+confirmMessage = signal('');
+private confirmAction: (() => void) | null = null;
+
+askConfirm(message: string, action: () => void): void {
+  this.confirmMessage.set(message);
+  this.confirmAction = action;
+  this.showConfirmModal.set(true);
+}
+
+closeConfirmModal(): void {
+  this.showConfirmModal.set(false);
+  this.confirmAction = null;
+}
+
+confirmYes(): void {
+  const action = this.confirmAction;
+  this.showConfirmModal.set(false);
+  this.confirmAction = null;
+  action?.();
+}
   async ngOnInit(): Promise<void> {
     await this.loadAll();
   }
@@ -75,6 +151,8 @@ export class GestionDepartements implements OnInit {
       if (!this.selectedDepartementId() && depts.length > 0) {
         this.selectedDepartementId.set(depts[0].id);
       }
+      this.deptCurrentPage.set(Math.min(this.deptCurrentPage(), this.deptTotalPages()));
+      this.catCurrentPage.set(Math.min(this.catCurrentPage(), this.catTotalPages()));
     } catch {
       this.error.set('Erreur lors du chargement des départements.');
     } finally {
@@ -84,6 +162,7 @@ export class GestionDepartements implements OnInit {
 
   selectDepartement(id: number): void {
     this.selectedDepartementId.set(id);
+    this.catCurrentPage.set(1);
   }
 
   // --- CRUD Département ---
@@ -137,22 +216,26 @@ export class GestionDepartements implements OnInit {
   }
 
   async deleteDept(dept: Departement): Promise<void> {
-    if (!confirm(`Supprimer le département "${dept.nom}" ? Cette action est irréversible.`)) {
-      return;
+  this.askConfirm(
+    `Supprimer le département "${dept.nom}" ? Cette action est irréversible.`,
+    () => this.doDeleteDept(dept),
+  );
+}
+
+private async doDeleteDept(dept: Departement): Promise<void> {
+  try {
+    await this.departementService.deleteDepartement(dept.id);
+    if (this.selectedDepartementId() === dept.id) {
+      this.selectedDepartementId.set(null);
     }
-    try {
-      await this.departementService.deleteDepartement(dept.id);
-      if (this.selectedDepartementId() === dept.id) {
-        this.selectedDepartementId.set(null);
-      }
-      await this.loadAll();
-    } catch (err: any) {
-      this.error.set(
-        err?.error?.message ??
-          'Impossible de supprimer ce département (des catégories ou demandes y sont peut-être rattachées).',
-      );
-    }
+    await this.loadAll();
+  } catch (err: any) {
+    this.error.set(
+      err?.error?.message ??
+        'Impossible de supprimer ce département (des catégories ou demandes y sont peut-être rattachées).',
+    );
   }
+}
 
   // --- CRUD Catégorie ---
 
@@ -222,17 +305,21 @@ export class GestionDepartements implements OnInit {
   }
 
   async deleteCat(cat: Categorie): Promise<void> {
-    if (!confirm(`Supprimer la catégorie "${cat.nom}" ? Cette action est irréversible.`)) {
-      return;
-    }
-    try {
-      await this.departementService.deleteCategorie(cat.id);
-      await this.loadAll();
-    } catch (err: any) {
-      this.error.set(
-        err?.error?.message ??
-          'Impossible de supprimer cette catégorie (des demandes y sont peut-être rattachées).',
-      );
-    }
+  this.askConfirm(
+    `Supprimer la catégorie "${cat.nom}" ? Cette action est irréversible.`,
+    () => this.doDeleteCat(cat),
+  );
+}
+
+private async doDeleteCat(cat: Categorie): Promise<void> {
+  try {
+    await this.departementService.deleteCategorie(cat.id);
+    await this.loadAll();
+  } catch (err: any) {
+    this.error.set(
+      err?.error?.message ??
+        'Impossible de supprimer cette catégorie (des demandes y sont peut-être rattachées).',
+    );
   }
+}
 }

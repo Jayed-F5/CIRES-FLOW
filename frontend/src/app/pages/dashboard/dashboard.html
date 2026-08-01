@@ -10,8 +10,8 @@
       <div class="page-header">
         <h1>Tableau de Bord Analytique</h1>
         <div class="header-actions">
-          <button class="export-btn">Exporter Excel</button>
-          <button class="export-btn">Exporter PDF</button>
+          <button class="export-btn" (click)="exportExcel()">Exporter Excel</button>
+          <button class="export-btn" (click)="exportPdf()">Exporter PDF</button>
         </div>
       </div>
 
@@ -59,7 +59,7 @@
             <span class="live-badge">Temps Réel</span>
           </div>
           <app-bar-chart [data]="barChartData()" />
-          <a class="detail-link" href="#">Consulter le rapport détaillé ›</a>
+          <a class="detail-link" routerLink="/mes-demandes">Consulter le rapport détaillé ›</a>
         </div>
 
         <div class="chart-card">

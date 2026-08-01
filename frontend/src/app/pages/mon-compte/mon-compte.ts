@@ -34,7 +34,7 @@ export class MonCompte implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  readonly roleLabels: Record<string, string> = {
+  readonly roleLabels: Partial<Record<string, string>> = {
     EMPLOYE: 'Employé',
     AGENT: 'Agent',
     MANAGER: 'Manager',

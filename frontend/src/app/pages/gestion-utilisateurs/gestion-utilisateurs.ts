@@ -6,11 +6,7 @@ import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { LucideSearch } from '@lucide/angular';
 import { UsersService, Utilisateur, Role } from '../../services/users.service';
-
-interface Departement {
-  id: number;
-  nom: string;
-}
+import { DepartementService, Departement } from '../../services/departement.service';
 
 interface NewUserForm {
   nom: string;
@@ -31,6 +27,7 @@ interface NewUserForm {
 export class GestionUtilisateurs implements OnInit {
   private http = inject(HttpClient);
   private usersService = inject(UsersService);
+  private departementService = inject(DepartementService);
 
   users = signal<Utilisateur[]>([]);
   departements = signal<Departement[]>([]);
@@ -87,6 +84,21 @@ export class GestionUtilisateurs implements OnInit {
     });
   });
 
+  readonly pageSize = 6;
+currentPage = signal(1);
+
+totalPages = computed(() =>
+  Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize)),
+);
+pageNumbers = computed(() =>
+  Array.from({ length: this.totalPages() }, (_, i) => i + 1),
+);
+
+paginatedUsers = computed(() => {
+  const start = (this.currentPage() - 1) * this.pageSize;
+  return this.filteredUsers().slice(start, start + this.pageSize);
+});
+
   async ngOnInit(): Promise<void> {
     await this.loadAll();
   }
@@ -97,7 +109,7 @@ export class GestionUtilisateurs implements OnInit {
     try {
       const [users, depts] = await Promise.all([
         this.usersService.getUsers(),
-        firstValueFrom(this.http.get<Departement[]>(`${environment.apiUrl}/departement`)),
+        this.departementService.getDepartements(),
       ]);
       this.users.set(users);
       this.departements.set(depts);
@@ -109,16 +121,19 @@ export class GestionUtilisateurs implements OnInit {
   }
 
   onSearchInput(value: string): void {
-    this.searchTerm.set(value);
-  }
+  this.searchTerm.set(value);
+  this.currentPage.set(1);
+}
 
-  onRoleFilterChange(value: string): void {
-    this.roleFilter.set(value);
-  }
+onRoleFilterChange(value: string): void {
+  this.roleFilter.set(value);
+  this.currentPage.set(1);
+}
 
-  onStatutFilterChange(value: string): void {
-    this.statutFilter.set(value);
-  }
+onStatutFilterChange(value: string): void {
+  this.statutFilter.set(value);
+  this.currentPage.set(1);
+}
 
   startEdit(user: Utilisateur): void {
     this.editingUserId.set(user.id);
@@ -199,6 +214,11 @@ export class GestionUtilisateurs implements OnInit {
       return;
     }
 
+    if (form.motDePasse.length < 8) {
+      this.createError.set('Le mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
+
     this.createSubmitting.set(true);
     this.createError.set(null);
 
@@ -228,4 +248,16 @@ export class GestionUtilisateurs implements OnInit {
       this.createSubmitting.set(false);
     }
   }
+  goToPage(page: number): void {
+  if (page < 1 || page > this.totalPages()) return;
+  this.currentPage.set(page);
+}
+
+nextPage(): void {
+  this.goToPage(this.currentPage() + 1);
+}
+
+previousPage(): void {
+  this.goToPage(this.currentPage() - 1);
+}
 }

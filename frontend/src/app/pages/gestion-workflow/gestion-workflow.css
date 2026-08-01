@@ -67,6 +67,7 @@
   padding: 8px 24px;
   box-shadow: 0 1px 3px rgba(3, 28, 45, 0.04);
   box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .status-text {
@@ -81,9 +82,11 @@
 }
 
 .demandes-table {
+  min-width: 420px;
   width: 100%;
   border-collapse: collapse;
   font-family: 'Inter', sans-serif;
+  table-layout: fixed;
 }
 
 .demandes-table th {
@@ -96,6 +99,7 @@
   border-bottom: 1px solid #eceef1;
   text-transform: uppercase;
   background-color: #f7f8fa;
+  white-space: nowrap;
 }
 
 .demandes-table td {
@@ -103,7 +107,14 @@
   font-size: 13px;
   color: #031c2d;
   border-bottom: 1px solid #f3f6f8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.demandes-table th:nth-child(1) { width: 20%; }
+.demandes-table th:nth-child(2) { width: 45%; }
+.demandes-table th:nth-child(3) { width: 35%; }
 
 .actions-header {
   text-align: center !important;
@@ -111,6 +122,9 @@
 
 .actions-cell {
   text-align: center;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .link-btn {
@@ -181,6 +195,7 @@
   border-radius: 12px;
   padding: 28px;
   width: 420px;
+  max-width: calc(100vw - 32px);
   max-height: 90vh;
   overflow-y: auto;
   box-sizing: border-box;
@@ -325,4 +340,83 @@
 .ordre-cell {
   font-weight: 700;
   color: #031c2d;
+}
+
+.confirm-modal {
+  max-width: 380px;
+  text-align: center;
+}
+
+.confirm-icon {
+  display: flex;
+  justify-content: center;
+  color: #f0b429;
+  margin-bottom: 8px;
+}
+
+.confirm-modal h2 {
+  color: #031c2d;
+}
+
+.confirm-message {
+  margin: 8px 0 20px;
+  line-height: 1.5;
+  color: #4a5a68;
+}
+
+.confirm-danger-btn {
+  background-color: #da3633;
+  border: 1px solid #da3633;
+  color: #ffffff;
+}
+
+.confirm-danger-btn:hover {
+  background-color: #b42a27;
+  border-color: #b42a27;
+}
+
+@media (max-width: 1100px) {
+  .page-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-content {
+    padding: 16px;
+  }
+
+  .greeting-card {
+    padding: 20px;
+  }
+
+  .selectors-row {
+    flex-wrap: wrap;
+  }
+
+  .filter-select {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .table-card {
+    padding: 8px 16px;
+  }
+
+  .column-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .dashboard-footer-inner {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 20px;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
 }

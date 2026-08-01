@@ -53,7 +53,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (user of filteredUsers(); track user.id) {
+            @for (user of paginatedUsers(); track user.id) {
               <tr>
                 <td>
                   <div class="user-cell">
@@ -119,6 +119,33 @@
             }
           </tbody>
         </table>
+         @if (totalPages() > 1) {
+          <div class="pagination-row">
+            <a
+              class="page-btn page-btn-nav"
+              [class.page-btn-disabled]="currentPage() === 1"
+              (click)="previousPage()"
+            >
+              ‹ Précédent
+            </a>
+            @for (page of pageNumbers(); track page) {
+              <a
+                class="page-btn"
+                [class.page-btn-active]="page === currentPage()"
+                (click)="goToPage(page)"
+              >
+                {{ page }}
+              </a>
+            }
+            <a
+              class="page-btn page-btn-nav"
+              [class.page-btn-disabled]="currentPage() === totalPages()"
+              (click)="nextPage()"
+            >
+              Suivant ›
+            </a>
+          </div>
+        }
       }
     </div>
   </div>

@@ -218,3 +218,47 @@ select:disabled {
   font-size: 12px;
   color: #e74c3c;
 }
+
+@media (max-width: 700px) {
+  .page-content {
+    padding: 24px;
+  }
+
+  .form-card {
+    padding: 24px 20px;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .dropzone {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .dashboard-footer-inner {
+    padding: 16px 20px;
+  }
+}

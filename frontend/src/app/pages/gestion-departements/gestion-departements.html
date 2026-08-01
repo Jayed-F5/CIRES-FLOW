@@ -24,7 +24,7 @@
           </div>
 
           <div class="dept-list">
-            @for (dept of departements(); track dept.id) {
+            @for (dept of paginatedDepartements(); track dept.id) {
               <div
                 class="dept-item"
                 [class.dept-item-active]="dept.id === selectedDepartementId()"
@@ -41,6 +41,34 @@
               <p class="status-text">Aucun département.</p>
             }
           </div>
+
+          @if (deptTotalPages() > 1) {
+            <div class="pagination-row">
+              <a
+                class="page-btn page-btn-nav"
+                [class.page-btn-disabled]="deptCurrentPage() === 1"
+                (click)="previousDeptPage()"
+              >
+                ‹
+              </a>
+              @for (page of deptPageNumbers(); track page) {
+                <a
+                  class="page-btn"
+                  [class.page-btn-active]="page === deptCurrentPage()"
+                  (click)="goToDeptPage(page)"
+                >
+                  {{ page }}
+                </a>
+              }
+              <a
+                class="page-btn page-btn-nav"
+                [class.page-btn-disabled]="deptCurrentPage() === deptTotalPages()"
+                (click)="nextDeptPage()"
+              >
+                ›
+              </a>
+            </div>
+          }
         </div>
 
         <div class="table-card cat-column">
@@ -75,7 +103,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (cat of categoriesForSelected(); track cat.id) {
+                @for (cat of paginatedCategories(); track cat.id) {
                   <tr>
                     <td>{{ cat.nom }}</td>
                     <td>{{ cat.delaiReponse }}</td>
@@ -88,6 +116,34 @@
                 }
               </tbody>
             </table>
+
+            @if (catTotalPages() > 1) {
+              <div class="pagination-row">
+                <a
+                  class="page-btn page-btn-nav"
+                  [class.page-btn-disabled]="catCurrentPage() === 1"
+                  (click)="previousCatPage()"
+                >
+                  ‹ Précédent
+                </a>
+                @for (page of catPageNumbers(); track page) {
+                  <a
+                    class="page-btn"
+                    [class.page-btn-active]="page === catCurrentPage()"
+                    (click)="goToCatPage(page)"
+                  >
+                    {{ page }}
+                  </a>
+                }
+                <a
+                  class="page-btn page-btn-nav"
+                  [class.page-btn-disabled]="catCurrentPage() === catTotalPages()"
+                  (click)="nextCatPage()"
+                >
+                  Suivant ›
+                </a>
+              </div>
+            }
           }
         </div>
       </div>
@@ -175,6 +231,24 @@
         <button class="submit-btn" [disabled]="catSubmitting()" (click)="submitCat()">
           {{ catSubmitting() ? 'Enregistrement...' : 'Enregistrer' }}
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showConfirmModal()) {
+  <div class="modal-overlay" (click)="closeConfirmModal()">
+    <div class="modal confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>Confirmation</h2>
+      <p class="status-text confirm-message">{{ confirmMessage() }}</p>
+      <div class="modal-actions">
+        <a class="cancel-btn" (click)="closeConfirmModal()">Annuler</a>
+        <button class="submit-btn confirm-danger-btn" (click)="confirmYes()">Confirmer</button>
       </div>
     </div>
   </div>

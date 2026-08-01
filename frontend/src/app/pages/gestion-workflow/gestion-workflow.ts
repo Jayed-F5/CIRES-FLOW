@@ -60,6 +60,28 @@ export class GestionWorkflow implements OnInit {
   etapeForm = signal<EtapeForm>({ ordre: '', roleApprobateur: 'MANAGER' });
   etapeSubmitting = signal(false);
   etapeError = signal<string | null>(null);
+  // --- Modale de confirmation ---
+showConfirmModal = signal(false);
+confirmMessage = signal('');
+private confirmAction: (() => void) | null = null;
+
+askConfirm(message: string, action: () => void): void {
+  this.confirmMessage.set(message);
+  this.confirmAction = action;
+  this.showConfirmModal.set(true);
+}
+
+closeConfirmModal(): void {
+  this.showConfirmModal.set(false);
+  this.confirmAction = null;
+}
+
+confirmYes(): void {
+  const action = this.confirmAction;
+  this.showConfirmModal.set(false);
+  this.confirmAction = null;
+  action?.();
+}
 
   async ngOnInit(): Promise<void> {
     this.loading.set(true);
@@ -180,20 +202,24 @@ export class GestionWorkflow implements OnInit {
   }
 
   async deleteEtape(etape: WorkflowEtape): Promise<void> {
-    if (!confirm(`Supprimer l'étape ${etape.ordre} (${this.roleLabels[etape.roleApprobateur]}) ?`)) {
-      return;
+  this.askConfirm(
+    `Supprimer l'étape ${etape.ordre} (${this.roleLabels[etape.roleApprobateur]}) ?`,
+    () => this.doDeleteEtape(etape),
+  );
+}
+
+private async doDeleteEtape(etape: WorkflowEtape): Promise<void> {
+  const categorieId = this.selectedCategorieId();
+  try {
+    await this.workflowService.deleteEtape(etape.id);
+    if (categorieId) {
+      await this.loadEtapes(categorieId);
     }
-    const categorieId = this.selectedCategorieId();
-    try {
-      await this.workflowService.deleteEtape(etape.id);
-      if (categorieId) {
-        await this.loadEtapes(categorieId);
-      }
-    } catch (err: any) {
-      this.error.set(
-        err?.error?.message ??
-          'Impossible de supprimer cette étape (des approbations y sont peut-être rattachées).',
-      );
-    }
+  } catch (err: any) {
+    this.error.set(
+      err?.error?.message ??
+        'Impossible de supprimer cette étape (des approbations y sont peut-être rattachées).',
+    );
   }
+}
 }
