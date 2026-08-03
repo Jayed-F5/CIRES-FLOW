@@ -230,20 +230,6 @@
   box-sizing: border-box;
 }
 
-.dashboard-footer .footer-links {
-  display: flex;
-  gap: 24px;
-}
-
-.dashboard-footer a {
-  color: #9aa2ad;
-  text-decoration: none;
-}
-
-.dashboard-footer a:hover {
-  color: #031c2d;
-}
-
 @media (max-width: 1100px) {
   .dashboard-content {
     padding: 24px;
@@ -302,10 +288,6 @@
     padding: 16px 20px;
   }
 
-  .dashboard-footer .footer-links {
-    flex-wrap: wrap;
-    gap: 16px;
-  }
 }
 
 .donut-center-wrapper {

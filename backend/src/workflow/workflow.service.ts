@@ -1,7 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role, StatutApprobation, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { HistoriqueService } from '../historique/historique.service';
 import { NotificationService } from '../notification/notification.service';
 import { CreateEtapeDto } from './dto/create-etape.dto';
 import { DecideApprobationDto } from './dto/decide-approbation.dto';
@@ -17,7 +16,6 @@ interface CurrentUser {
 export class WorkflowService {
   constructor(
     private prisma: PrismaService,
-    private historiqueService: HistoriqueService,
     private notificationService: NotificationService,
   ) {}
 
@@ -81,7 +79,10 @@ export class WorkflowService {
       );
     }
 
-    if (user.role === Role.AGENT && approbation.demande.departementId !== user.departementId) {
+    if (
+      (user.role === Role.AGENT || user.role === Role.MANAGER) &&
+      approbation.demande.departementId !== user.departementId
+    ) {
       throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
     }
 
@@ -203,7 +204,10 @@ export class WorkflowService {
       throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
     }
 
-    if (user.role === Role.AGENT && demande.departementId !== user.departementId) {
+    if (
+      (user.role === Role.AGENT || user.role === Role.MANAGER) &&
+      demande.departementId !== user.departementId
+    ) {
       throw new ForbiddenException('Vous n\'avez pas accès à cette demande');
     }
 

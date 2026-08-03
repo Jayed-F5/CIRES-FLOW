@@ -44,7 +44,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
       this.userSockets.get(userId)!.add(client.id);
 
       this.logger.log(`Utilisateur #${userId} connecté (socket ${client.id})`);
-    } catch (error) {
+    } catch {
       this.logger.warn(`Connexion WebSocket refusée (token invalide) : ${client.id}`);
       client.disconnect();
     }

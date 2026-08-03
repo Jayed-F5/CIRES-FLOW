@@ -31,7 +31,9 @@ export class GestionWorkflow implements OnInit {
   etapesLoading = signal(false);
   error = signal<string | null>(null);
 
-  readonly roleOptions: Role[] = ['EMPLOYE', 'AGENT', 'MANAGER', 'ADMIN'];
+  // EMPLOYE (demandeur) et ADMIN (administrateur système) ne sont pas des
+  // rôles métier valides pour approuver une demande.
+  readonly roleOptions: Role[] = ['AGENT', 'MANAGER'];
 
   readonly roleLabels: Record<Role, string> = {
     EMPLOYE: 'Employé',

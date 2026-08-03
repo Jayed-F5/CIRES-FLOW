@@ -9,10 +9,12 @@
     } @else {
       <div class="page-header">
         <h1>Tableau de Bord Analytique</h1>
-        <div class="header-actions">
-          <button class="export-btn" (click)="exportExcel()">Exporter Excel</button>
-          <button class="export-btn" (click)="exportPdf()">Exporter PDF</button>
-        </div>
+        @if (authService.user()?.role !== 'EMPLOYE') {
+          <div class="header-actions">
+            <button class="export-btn" (click)="exportExcel()">Exporter Excel</button>
+            <button class="export-btn" (click)="exportPdf()">Exporter PDF</button>
+          </div>
+        }
       </div>
 
       <div class="kpi-grid">
@@ -103,14 +105,8 @@
   </div>
 
   <div class="dashboard-footer">
-  <div class="dashboard-footer">
-  <div class="dashboard-footer-inner">
-    <div class="footer-links">
-      <a href="#">Confidentialité</a>
-      <a href="#">Conditions d'utilisation</a>
-      <a href="#">Documentation API</a>
+    <div class="dashboard-footer-inner">
+      <span>© 2026 CIRES FLOW</span>
     </div>
-    <span>© 2026 CIRES FLOW</span>
   </div>
-</div>
 </div>

@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -68,7 +68,6 @@ interface TimelineEvent {
 })
 export class DetailDemande implements OnInit {
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private demandeService = inject(DemandeService);
   private departementService = inject(DepartementService);
   private http = inject(HttpClient);

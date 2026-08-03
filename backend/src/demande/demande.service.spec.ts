@@ -27,10 +27,6 @@ function createMockPrisma() {
   };
 }
 
-function createMockHistorique() {
-  return { logAction: jest.fn() };
-}
-
 function createMockNotification() {
   return { notify: jest.fn(), notifyByRole: jest.fn() };
 }
@@ -80,7 +76,6 @@ describe('calculerIndicateurSLA', () => {
 describe('DemandeService', () => {
   let service: DemandeService;
   let prisma: ReturnType<typeof createMockPrisma>;
-  let historiqueService: ReturnType<typeof createMockHistorique>;
   let notificationService: ReturnType<typeof createMockNotification>;
 
   const employe = { userId: 1, role: Role.EMPLOYE, departementId: null };
@@ -89,9 +84,8 @@ describe('DemandeService', () => {
 
   beforeEach(() => {
     prisma = createMockPrisma();
-    historiqueService = createMockHistorique();
     notificationService = createMockNotification();
-    service = new DemandeService(prisma as any, historiqueService as any, notificationService as any);
+    service = new DemandeService(prisma as any, notificationService as any);
   });
 
   describe('findAll — scoping by role', () => {

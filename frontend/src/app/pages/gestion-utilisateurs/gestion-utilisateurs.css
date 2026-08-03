@@ -214,20 +214,6 @@
   box-sizing: border-box;
 }
 
-.footer-links {
-  display: flex;
-  gap: 24px;
-}
-
-.footer-links a {
-  color: #9aa2ad;
-  text-decoration: none;
-}
-
-.footer-links a:hover {
-  color: #031c2d;
-}
-
 /* --- Spécifique à Gestion des Utilisateurs --- */
 
 .user-cell {
@@ -509,8 +495,4 @@
     padding: 16px 20px;
   }
 
-  .footer-links {
-    flex-wrap: wrap;
-    gap: 16px;
-  }
 }

@@ -524,10 +524,14 @@
 }
 
 .dashboard-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   max-width: 1300px;
   width: 100%;
   margin: 0 auto;
   padding: 18px 40px;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: #9aa2ad;
   box-sizing: border-box;

@@ -1,7 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Priorite, Role, StatutDemande } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { HistoriqueService } from '../historique/historique.service';
 import { NotificationService } from '../notification/notification.service';
 import { CreateDemandeDto } from './dto/create-demande.dto';
 import { QueryDemandeDto } from './dto/query-demande.dto';
@@ -62,7 +61,6 @@ export function calculerIndicateurSLA(demande: {
 export class DemandeService {
   constructor(
     private prisma: PrismaService,
-    private historiqueService: HistoriqueService,
     private notificationService: NotificationService,
   ) {}
 

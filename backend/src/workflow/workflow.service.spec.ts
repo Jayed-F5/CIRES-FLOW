@@ -26,10 +26,6 @@ function createMockPrisma() {
   };
 }
 
-function createMockHistorique() {
-  return { logAction: jest.fn() };
-}
-
 function createMockNotification() {
   return { notify: jest.fn(), notifyByRole: jest.fn() };
 }
@@ -37,7 +33,6 @@ function createMockNotification() {
 describe('WorkflowService', () => {
   let service: WorkflowService;
   let prisma: ReturnType<typeof createMockPrisma>;
-  let historiqueService: ReturnType<typeof createMockHistorique>;
   let notificationService: ReturnType<typeof createMockNotification>;
 
   const manager = { userId: 1, role: Role.MANAGER, departementId: 1 };
@@ -60,9 +55,8 @@ describe('WorkflowService', () => {
 
   beforeEach(() => {
     prisma = createMockPrisma();
-    historiqueService = createMockHistorique();
     notificationService = createMockNotification();
-    service = new WorkflowService(prisma as any, historiqueService as any, notificationService as any);
+    service = new WorkflowService(prisma as any, notificationService as any);
   });
 
   describe('decideApprobation', () => {
@@ -88,6 +82,18 @@ describe('WorkflowService', () => {
       const wrongRoleUser = { ...manager, role: Role.AGENT };
       await expect(
         service.decideApprobation(42, { statut: StatutApprobation.APPROUVE } as any, wrongRoleUser),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("rejette un manager d'un autre département", async () => {
+      prisma.approbation.findUnique.mockResolvedValue(baseApprobation);
+      const managerAutreDepartement = { ...manager, departementId: 2 };
+      await expect(
+        service.decideApprobation(
+          42,
+          { statut: StatutApprobation.APPROUVE } as any,
+          managerAutreDepartement,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 

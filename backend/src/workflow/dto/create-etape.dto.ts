@@ -1,5 +1,6 @@
-import { IsEnum, IsInt, IsPositive } from 'class-validator';
+import { IsIn, IsInt, IsPositive } from 'class-validator';
 import { Role } from '@prisma/client';
+import { APPROBATEUR_ROLES } from './approbateur-roles';
 
 export class CreateEtapeDto {
   @IsInt({ message: 'La catégorie est requise.' })
@@ -10,6 +11,8 @@ export class CreateEtapeDto {
   @IsPositive({ message: "L'ordre doit être un nombre positif." })
   ordre!: number;
 
-  @IsEnum(Role, { message: 'Le rôle approbateur sélectionné est invalide.' })
+  @IsIn(APPROBATEUR_ROLES, {
+    message: 'Le rôle approbateur doit être Agent ou Manager.',
+  })
   roleApprobateur!: Role;
 }
