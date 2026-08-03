@@ -189,6 +189,9 @@
           <div class="reference-card">
             <p class="sidebar-label">RÉFÉRENCE TICKET</p>
             <p class="reference-id">#DEM-{{ demande()!.id.toString().padStart(3, '0') }}</p>
+            <button type="button" class="secondary-btn pdf-btn" [disabled]="exportingPdf()" (click)="downloadPdf()">
+              @if (exportingPdf()) { Génération... } @else { Télécharger en PDF }
+            </button>
           </div>
         </div>
       </div>

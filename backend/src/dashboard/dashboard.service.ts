@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
 import { calculerIndicateurSLA } from '../demande/demande.service';
+import { DashboardFilterDto } from './dto/dashboard-filter.dto';
 
 interface CurrentUser {
   userId: number;
@@ -28,8 +29,36 @@ export class DashboardService {
     return {};
   }
 
-  async getStatsGlobales(user: CurrentUser) {
-    const scopeWhere = this.buildScopeWhere(user);
+  // Fusionne les filtres optionnels (période, statut, catégorie) fournis par le client
+  // au périmètre déjà imposé par le rôle de l'utilisateur.
+  private buildFilterWhere(filters: DashboardFilterDto): Record<string, any> {
+    const where: Record<string, any> = {};
+
+    if (filters.dateFrom || filters.dateTo) {
+      where.dateCreation = {};
+      if (filters.dateFrom) {
+        where.dateCreation.gte = new Date(filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        const endOfDay = new Date(filters.dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        where.dateCreation.lte = endOfDay;
+      }
+    }
+
+    if (filters.statut) {
+      where.statut = filters.statut;
+    }
+
+    if (filters.categorieId) {
+      where.categorieId = filters.categorieId;
+    }
+
+    return where;
+  }
+
+  async getStatsGlobales(user: CurrentUser, filters: DashboardFilterDto = {}) {
+    const scopeWhere = { ...this.buildScopeWhere(user), ...this.buildFilterWhere(filters) };
 
     const [parStatut, parCategorie, parDepartement, total] = await Promise.all([
       this.prisma.demande.groupBy({
@@ -83,9 +112,14 @@ export class DashboardService {
     };
   }
 
-  async getPerformanceStats(user: CurrentUser) {
+  async getPerformanceStats(user: CurrentUser, filters: DashboardFilterDto = {}) {
     const scopeWhere = this.buildScopeWhere(user);
-    const baseWhere: any = { ...scopeWhere, statut: { not: 'ANNULE' } };
+    // Par défaut on exclut les demandes annulées ; un filtre statut explicite prend le dessus.
+    const baseWhere: any = {
+      ...scopeWhere,
+      statut: { not: 'ANNULE' },
+      ...this.buildFilterWhere(filters),
+    };
 
     const demandesCloturees = await this.prisma.demande.findMany({
       where: { ...baseWhere, dateCloture: { not: null } },
@@ -133,8 +167,8 @@ export class DashboardService {
     };
   }
 
-  async getKpiStats(user: CurrentUser) {
-    const scopeWhere = this.buildScopeWhere(user);
+  async getKpiStats(user: CurrentUser, filters: DashboardFilterDto = {}) {
+    const scopeWhere = { ...this.buildScopeWhere(user), ...this.buildFilterWhere(filters) };
 
     const demandes = await this.prisma.demande.findMany({
       where: scopeWhere,

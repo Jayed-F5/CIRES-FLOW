@@ -17,6 +17,56 @@
         }
       </div>
 
+      <div class="filter-bar" [class.filter-bar-loading]="refreshing()">
+        <div class="filter-field">
+          <label for="filter-date-from">Du</label>
+          <input
+            id="filter-date-from"
+            type="date"
+            [ngModel]="filterDateFrom()"
+            (ngModelChange)="filterDateFrom.set($event); applyFilters()"
+          />
+        </div>
+        <div class="filter-field">
+          <label for="filter-date-to">Au</label>
+          <input
+            id="filter-date-to"
+            type="date"
+            [ngModel]="filterDateTo()"
+            (ngModelChange)="filterDateTo.set($event); applyFilters()"
+          />
+        </div>
+        <div class="filter-field">
+          <label for="filter-statut">Statut</label>
+          <select
+            id="filter-statut"
+            [ngModel]="filterStatut()"
+            (ngModelChange)="filterStatut.set($event); applyFilters()"
+          >
+            <option value="">Tous</option>
+            @for (entry of statutOptions; track entry[0]) {
+              <option [value]="entry[0]">{{ entry[1] }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="filter-categorie">Catégorie</label>
+          <select
+            id="filter-categorie"
+            [ngModel]="filterCategorieId()"
+            (ngModelChange)="filterCategorieId.set($event); applyFilters()"
+          >
+            <option [ngValue]="null">Toutes</option>
+            @for (cat of categories(); track cat.id) {
+              <option [ngValue]="cat.id">{{ cat.nom }}</option>
+            }
+          </select>
+        </div>
+        <button type="button" class="filter-reset-btn" (click)="resetFilters()">
+          Réinitialiser
+        </button>
+      </div>
+
       <div class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-top">

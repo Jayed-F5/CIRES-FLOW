@@ -59,6 +59,72 @@
   background: #f7f8fa;
 }
 
+.filter-bar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e9f0f2;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(3, 28, 45, 0.04);
+  box-sizing: border-box;
+  transition: opacity 0.15s ease;
+}
+
+.filter-bar-loading {
+  opacity: 0.6;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #9aa2ad;
+}
+
+.filter-field input,
+.filter-field select {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #031c2d;
+  background: #ffffff;
+  border: 1px solid #dbdfe4;
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 150px;
+}
+
+.filter-field input:focus,
+.filter-field select:focus {
+  outline: none;
+  border-color: #ffaa01;
+}
+
+.filter-reset-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9aa2ad;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 4px;
+}
+
+.filter-reset-btn:hover {
+  color: #031c2d;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

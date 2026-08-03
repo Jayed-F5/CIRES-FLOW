@@ -7,6 +7,7 @@ import {
   DemandeService,
   DemandeDetail,
   StatutDemande,
+  IndicateurSLA,
   STATUT_LABELS_DETAIL,
   SLA_LABELS_DETAIL,
 } from '../../services/demande.service';
@@ -15,6 +16,7 @@ import { AuthService } from '../../services/auth.service';
 import { Header } from '../../shared/header/header';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
+import { PDF_COLORS, drawPdfHeaderBand, drawPdfSectionTitle, ensurePdfSpace, stampPdfFooter } from '../../shared/pdf-branding';
 
 interface Commentaire {
   id: number;
@@ -89,6 +91,7 @@ export class DetailDemande implements OnInit {
   submittingComment = signal(false);
   decidingApprobationId = signal<number | null>(null);
   changingStatut = signal(false);
+  exportingPdf = signal(false);
 
   currentRole = computed(() => this.authService.user()?.role);
   currentUserId = computed(() => this.authService.user()?.id);
@@ -315,6 +318,134 @@ export class DetailDemande implements OnInit {
       this.actionError.set(err?.error?.message ?? 'Erreur lors du changement de statut');
     } finally {
       this.changingStatut.set(false);
+    }
+  }
+
+  private pdfStatutColors(statut: StatutDemande): { bg: [number, number, number]; text: [number, number, number] } {
+    if (statut === 'EN_ATTENTE_APPROBATION' || statut === 'EN_COURS') {
+      return { bg: PDF_COLORS.amber, text: PDF_COLORS.navy };
+    }
+    if (statut === 'RESOLU' || statut === 'CLOTURE') {
+      return { bg: [30, 132, 73], text: [255, 255, 255] };
+    }
+    if (statut === 'REJETE' || statut === 'ANNULE') {
+      return { bg: [192, 57, 43], text: [255, 255, 255] };
+    }
+    return { bg: [238, 241, 244], text: PDF_COLORS.navy };
+  }
+
+  private pdfSlaColor(indicateur: IndicateurSLA): [number, number, number] {
+    if (indicateur === 'RESPECTE') return [46, 204, 113];
+    if (indicateur === 'A_RISQUE') return PDF_COLORS.amber;
+    if (indicateur === 'DEPASSE') return [255, 107, 94];
+    return PDF_COLORS.muted;
+  }
+
+  private pdfDrawChip(doc: any, x: number, y: number, text: string, bg: [number, number, number], textColor: [number, number, number]): number {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    const textWidth = doc.getTextWidth(text);
+    const w = textWidth + 10;
+    const h = 7;
+    doc.setFillColor(...bg);
+    doc.roundedRect(x, y, w, h, 2, 2, 'F');
+    doc.setTextColor(...textColor);
+    doc.text(text, x + w / 2, y + h / 2 + 1.1, { align: 'center' });
+    return w;
+  }
+
+  async downloadPdf(): Promise<void> {
+    const d = this.demande();
+    if (!d) return;
+
+    this.exportingPdf.set(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF() as any;
+      const ref = `DEM-${d.id.toString().padStart(3, '0')}`;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const marginX = 16;
+      const contentWidth = pageWidth - marginX * 2;
+
+      let y = drawPdfHeaderBand(doc, marginX, 'FICHE DE DEMANDE', `#${ref}`);
+
+      // --- Titre ---
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(17);
+      doc.setTextColor(...PDF_COLORS.navy);
+      const titleLines = doc.splitTextToSize(d.titre, contentWidth);
+      doc.text(titleLines, marginX, y);
+      y += titleLines.length * 7 + 3;
+
+      // --- Chips statut / SLA ---
+      const statutColors = this.pdfStatutColors(d.statut);
+      let chipX = marginX;
+      chipX += this.pdfDrawChip(doc, chipX, y, this.statutLabels[d.statut], statutColors.bg, statutColors.text) + 4;
+      this.pdfDrawChip(doc, chipX, y, `SLA · ${this.slaLabels[d.indicateurSLA]}`, this.pdfSlaColor(d.indicateurSLA), [255, 255, 255]);
+      y += 14;
+
+      // --- Métadonnées ---
+      doc.setDrawColor(...PDF_COLORS.border);
+      doc.line(marginX, y, pageWidth - marginX, y);
+      y += 8;
+
+      const metaCols: [string, string][] = [
+        ['DEMANDEUR', `${d.demandeur.prenom} ${d.demandeur.nom}`],
+        ['DÉPARTEMENT', this.departementName()],
+        ['CATÉGORIE', this.categorieName()],
+        ['CRÉÉE LE', this.formatDate(d.dateCreation)],
+      ];
+      const colWidth = contentWidth / metaCols.length;
+      metaCols.forEach(([label, value], i) => {
+        const colX = marginX + i * colWidth;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(...PDF_COLORS.muted);
+        doc.text(label, colX, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10.5);
+        doc.setTextColor(...PDF_COLORS.navy);
+        doc.text(doc.splitTextToSize(value, colWidth - 6), colX, y + 5.5);
+      });
+      y += 20;
+
+      // --- Description ---
+      y = drawPdfSectionTitle(doc, 'DESCRIPTION', marginX, y);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      const descLines = doc.splitTextToSize(d.description, contentWidth - 12);
+      const descBoxHeight = descLines.length * 5 + 10;
+      y = ensurePdfSpace(doc, y, descBoxHeight);
+      doc.setFillColor(...PDF_COLORS.bg);
+      doc.setDrawColor(...PDF_COLORS.border);
+      doc.roundedRect(marginX, y, contentWidth, descBoxHeight, 2, 2, 'FD');
+      doc.setTextColor(...PDF_COLORS.body);
+      doc.text(descLines, marginX + 6, y + 7);
+      y += descBoxHeight + 12;
+
+      // --- Pièces jointes ---
+      const pieces = this.piecesJointes();
+      if (pieces.length > 0) {
+        y = ensurePdfSpace(doc, y, 10 + pieces.length * 6);
+        y = drawPdfSectionTitle(doc, 'PIÈCES JOINTES', marginX, y);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...PDF_COLORS.body);
+        for (const p of pieces) {
+          y = ensurePdfSpace(doc, y, 6);
+          doc.setFillColor(...PDF_COLORS.amber);
+          doc.circle(marginX + 1, y - 1.4, 0.8, 'F');
+          doc.text(p.nomFichier, marginX + 5, y);
+          y += 6;
+        }
+      }
+
+      stampPdfFooter(doc, marginX);
+      doc.save(`${ref}.pdf`);
+    } finally {
+      this.exportingPdf.set(false);
     }
   }
 
