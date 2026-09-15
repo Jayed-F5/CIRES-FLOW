@@ -20,23 +20,23 @@ import {
 @Component({
   selector: 'app-header',
   standalone: true,
-imports: [
-  RouterLink,
-  RouterLinkActive,
-  LucideBell,
-  LucideUser,
-  LucideLogOut,
-  LucideChevronDown,
-  LucideLayoutDashboard,
-  LucideClipboardList,
-  LucideFilePlus,
-  LucideListChecks,
-  LucideUsers,
-  LucideBuilding2,
-  LucideWorkflow,
-  LucideMenu,
-  LucideX
-],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    LucideBell,
+    LucideUser,
+    LucideLogOut,
+    LucideChevronDown,
+    LucideLayoutDashboard,
+    LucideClipboardList,
+    LucideFilePlus,
+    LucideListChecks,
+    LucideUsers,
+    LucideBuilding2,
+    LucideWorkflow,
+    LucideMenu,
+    LucideX,
+  ],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -66,16 +66,16 @@ export class Header {
     ];
 
     if (role === 'AGENT' || role === 'MANAGER' || role === 'ADMIN') {
-  links.push({ path: '/file-gestion', label: 'File de Gestion', icon: 'file' });
-}
+      links.push({ path: '/file-gestion', label: 'File de Gestion', icon: 'file' });
+    }
 
-if (role === 'ADMIN') {
-  links.push({ path: '/gestion-utilisateurs', label: 'Utilisateurs', icon: 'users' });
-  links.push({ path: '/gestion-departements', label: 'Départements', icon: 'departements' });
-  links.push({ path: '/gestion-workflow', label: 'Circuits', icon: 'workflow' });
-}
+    if (role === 'ADMIN') {
+      links.push({ path: '/gestion-utilisateurs', label: 'Utilisateurs', icon: 'users' });
+      links.push({ path: '/gestion-departements', label: 'Départements', icon: 'departements' });
+      links.push({ path: '/gestion-workflow', label: 'Circuits', icon: 'workflow' });
+    }
 
-return links;
+    return links;
   }
 
   get initials(): string {
@@ -129,6 +129,10 @@ return links;
 
   closeNotifMenu(): void {
     this.notifMenuOpen.set(false);
+  }
+
+  loadMoreNotifications(): void {
+    void this.notificationService.loadMore();
   }
 
   async onNotificationClick(notif: Notification): Promise<void> {

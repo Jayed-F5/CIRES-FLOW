@@ -1,5 +1,15 @@
-import { Controller, Get, Param, ParseIntPipe, Patch, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
+import { QueryNotificationDto } from './dto/query-notification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('notifications')
@@ -8,8 +18,12 @@ export class NotificationController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findMine(@Req() req: any) {
-    return this.notificationService.findMine(req.user.userId);
+  findMine(@Query() query: QueryNotificationDto, @Req() req: any) {
+    return this.notificationService.findMine(
+      req.user.userId,
+      query.page,
+      query.limit,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

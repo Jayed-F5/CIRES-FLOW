@@ -17,12 +17,14 @@
     <a routerLink="/dashboard" class="logo-link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
         <rect x="20" y="20" width="60" height="60" rx="8" ry="8" fill="#031c2d" />
-        <path d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67"
-              fill="none"
-              stroke="#ffffff"
-              stroke-width="3.6"
-              stroke-linecap="round"
-              stroke-linejoin="round" />
+        <path
+          d="M 33 50 H 43 L 47.6 30 L 52.4 70 L 57 50 H 67"
+          fill="none"
+          stroke="#ffffff"
+          stroke-width="3.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
       </svg>
       <span class="logo-text">CIRES FLOW</span>
     </a>
@@ -32,20 +34,34 @@
     @for (link of navLinks; track link.path) {
       <a [routerLink]="link.path" routerLinkActive="nav-link-active" class="nav-link">
         @switch (link.icon) {
-          @case ('dashboard') { <svg lucideLayoutDashboard [size]="16"></svg> }
-          @case ('demandes') { <svg lucideClipboardList [size]="16"></svg> }
-          @case ('nouvelle') { <svg lucideFilePlus [size]="16"></svg> }
-          @case ('file') { <svg lucideListChecks [size]="16"></svg> }
-          @case ('users') { <svg lucideUsers [size]="16"></svg> }
-          @case ('departements') { <svg lucideBuilding2 [size]="16"></svg> }
-          @case ('workflow') { <svg lucideWorkflow [size]="16"></svg> }        }
+          @case ('dashboard') {
+            <svg lucideLayoutDashboard [size]="16"></svg>
+          }
+          @case ('demandes') {
+            <svg lucideClipboardList [size]="16"></svg>
+          }
+          @case ('nouvelle') {
+            <svg lucideFilePlus [size]="16"></svg>
+          }
+          @case ('file') {
+            <svg lucideListChecks [size]="16"></svg>
+          }
+          @case ('users') {
+            <svg lucideUsers [size]="16"></svg>
+          }
+          @case ('departements') {
+            <svg lucideBuilding2 [size]="16"></svg>
+          }
+          @case ('workflow') {
+            <svg lucideWorkflow [size]="16"></svg>
+          }
+        }
         <span>{{ link.label }}</span>
       </a>
     }
   </nav>
 
   <div class="header-right">
-
     <div class="notif-menu-wrapper">
       <button class="icon-btn" aria-label="Notifications" (click)="toggleNotifMenu()">
         <svg lucideBell [size]="20"></svg>
@@ -87,6 +103,17 @@
               }
             }
           </div>
+
+          @if (notificationService.hasMore()) {
+            <button
+              type="button"
+              class="notif-load-more"
+              [disabled]="notificationService.loadingMore()"
+              (click)="loadMoreNotifications()"
+            >
+              {{ notificationService.loadingMore() ? 'Chargement…' : 'Charger plus' }}
+            </button>
+          }
         </div>
       }
     </div>
@@ -133,13 +160,27 @@
           (click)="closeMobileNav()"
         >
           @switch (link.icon) {
-            @case ('dashboard') { <svg lucideLayoutDashboard [size]="18"></svg> }
-            @case ('demandes') { <svg lucideClipboardList [size]="18"></svg> }
-            @case ('nouvelle') { <svg lucideFilePlus [size]="18"></svg> }
-            @case ('file') { <svg lucideListChecks [size]="18"></svg> }
-            @case ('users') { <svg lucideUsers [size]="18"></svg> }
-            @case ('departements') { <svg lucideBuilding2 [size]="18"></svg> }
-            @case ('workflow') { <svg lucideWorkflow [size]="18"></svg> }
+            @case ('dashboard') {
+              <svg lucideLayoutDashboard [size]="18"></svg>
+            }
+            @case ('demandes') {
+              <svg lucideClipboardList [size]="18"></svg>
+            }
+            @case ('nouvelle') {
+              <svg lucideFilePlus [size]="18"></svg>
+            }
+            @case ('file') {
+              <svg lucideListChecks [size]="18"></svg>
+            }
+            @case ('users') {
+              <svg lucideUsers [size]="18"></svg>
+            }
+            @case ('departements') {
+              <svg lucideBuilding2 [size]="18"></svg>
+            }
+            @case ('workflow') {
+              <svg lucideWorkflow [size]="18"></svg>
+            }
           }
           <span>{{ link.label }}</span>
         </a>

@@ -1,98 +1,100 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Cires Demandes
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Conception d'une application des demandes internes et de leur traitement — backend NestJS + Prisma/PostgreSQL, frontend Angular.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Prerequis
 
-## Description
+- Node.js >= 20
+- PostgreSQL (serveur accessible, une base vide pour le projet)
+- Git
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## 1. Cloner le projet
 
 ```bash
-$ npm install
+git clone <url-du-repo>
+cd cires-demandes
 ```
 
-## Compile and run the project
+## 2. Backend (`backend/`)
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cd backend
+npm install
+cp .env.example .env
 ```
 
-## Run tests
+Editer `backend/.env` :
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | Chaine de connexion PostgreSQL, ex. `postgresql://user:password@localhost:5432/cires_demandes?schema=public` |
+| `JWT_ACCESS_SECRET` | Chaine aleatoire longue, propre a chaque environnement (ne pas reutiliser celle d'un autre poste) |
+| `JWT_ACCESS_EXPIRES_IN` | Duree de validite du token, ex. `8h` |
+| `CORS_ORIGIN` | URL du frontend, ex. `http://localhost:4200` |
+| `PORT` | Port de l'API (optionnel, defaut `3000`) |
+| `SMTP_*` | Optionnel en dev — laisser vide pour utiliser une boite Ethereal de test (lien affiche dans la console) |
+
+Appliquer les migrations Prisma :
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npx prisma migrate deploy
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Creer le dossier des pieces jointes (ignore par git) :
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+mkdir uploads
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Premier compte admin
 
-## Resources
+Il n'existe pas de route d'inscription publique : la creation d'utilisateurs (`POST /auth/users`) exige deja un compte `ADMIN`. Sur une base neuve, il faut donc creer le premier admin via le script de seed :
 
-Check out a few resources that may come in handy when working with NestJS:
+1. Renseigner `SEED_ADMIN_EMAIL` et `SEED_ADMIN_PASSWORD` (et optionnellement `SEED_ADMIN_NOM`/`SEED_ADMIN_PRENOM`) dans `backend/.env`.
+2. Lancer :
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npx prisma db seed
+```
 
-## Support
+Le script est idempotent : si un utilisateur existe deja avec cet email, il ne fait rien (il ne reinitialise jamais un mot de passe existant). Une fois connecte avec ce compte, les autres utilisateurs se creent depuis l'interface (page Gestion des Utilisateurs).
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+<details>
+<summary>Methode manuelle (si le script de seed ne convient pas)</summary>
 
-## Stay in touch
+Generer un hash bcrypt du mot de passe :
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+node -e "console.log(require('bcrypt').hashSync('MonMotDePasse', 10))"
+```
 
-## License
+Puis inserer la ligne via Prisma Studio (`npx prisma studio`) ou en SQL direct dans la table `utilisateurs` (`role = 'ADMIN'`, `actif = true`, `motDePasse` = hash genere ci-dessus).
+</details>
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Lancer le backend
+
+```bash
+npm run start:dev      # developpement (watch)
+# ou
+npm run build && npm run start:prod   # production
+```
+
+## 3. Frontend (`frontend/`)
+
+```bash
+cd ../frontend
+npm install
+```
+
+Verifier `src/environments/environment.ts` (dev) et `environment.prod.ts` (prod) : `apiUrl` doit pointer vers l'URL du backend. En prod, `environment.prod.ts` contient un placeholder (`https://api.REPLACE-ME.example.com`) — `main.ts` refuse de demarrer tant qu'il n'est pas remplace par la vraie URL.
+
+```bash
+npm start        # serveur de dev sur http://localhost:4200
+# ou
+npm run build     # build de prod dans dist/, a servir via un serveur statique / nginx
+```
+
+## Notes
+
+- `.env` (backend) contient des secrets et n'est jamais commite — seul `.env.example` (template sans valeurs sensibles) est versionne.
+- `backend/uploads/` (pieces jointes) est ignore par git ; recreer le dossier sur chaque nouvel environnement.

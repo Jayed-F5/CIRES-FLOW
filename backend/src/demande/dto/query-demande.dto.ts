@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsPositive, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Priorite, StatutDemande } from '@prisma/client';
 
@@ -13,6 +13,7 @@ export class QueryDemandeDto {
   @Type(() => Number)
   @IsInt({ message: 'La limite doit être un nombre entier.' })
   @Min(1, { message: 'La limite doit être supérieure ou égale à 1.' })
+  @Max(100, { message: 'La limite doit être inférieure ou égale à 100.' })
   limit?: number = 10;
 
   @IsOptional()

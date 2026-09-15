@@ -14,7 +14,8 @@ export class NotificationService implements OnModuleInit {
     private prisma: PrismaService,
     private notificationGateway: NotificationGateway,
   ) {
-    this.emailFrom = process.env.SMTP_FROM ?? '"Cires Flow" <no-reply@cires-flow.local>';
+    this.emailFrom =
+      process.env.SMTP_FROM ?? '"Cires Flow" <no-reply@cires-flow.local>';
   }
 
   async onModuleInit() {
@@ -55,7 +56,9 @@ export class NotificationService implements OnModuleInit {
 
   async sendEmail(to: string, subject: string, text: string): Promise<void> {
     if (!this.transporter) {
-      this.logger.warn(`Email non envoyé à ${to} : aucun transport email disponible`);
+      this.logger.warn(
+        `Email non envoyé à ${to} : aucun transport email disponible`,
+      );
       return;
     }
 
@@ -87,7 +90,11 @@ export class NotificationService implements OnModuleInit {
       },
     });
 
-    this.notificationGateway.sendToUser(utilisateurId, 'notification', notification);
+    this.notificationGateway.sendToUser(
+      utilisateurId,
+      'notification',
+      notification,
+    );
 
     // L'envoi d'email passe par un aller-retour SMTP externe qui peut prendre
     // plusieurs secondes — on ne bloque pas le cycle requête/réponse pour ça.
@@ -95,15 +102,29 @@ export class NotificationService implements OnModuleInit {
       .findUnique({ where: { id: utilisateurId } })
       .then((user) => {
         if (user) {
-          void this.sendEmail(user.email, 'Nouvelle notification - Cires Flow', message);
+          void this.sendEmail(
+            user.email,
+            'Nouvelle notification - Cires Flow',
+            message,
+          );
         }
       })
-      .catch((error) => this.logger.error('Échec de la récupération du destinataire de l\'email', error));
+      .catch((error) =>
+        this.logger.error(
+          "Échec de la récupération du destinataire de l'email",
+          error,
+        ),
+      );
 
     return notification;
   }
 
-  async notifyByRole(role: Role, departementId: number, message: string, lien?: string) {
+  async notifyByRole(
+    role: Role,
+    departementId: number,
+    message: string,
+    lien?: string,
+  ) {
     const users = await this.prisma.utilisateur.findMany({
       where: { role, departementId },
     });
@@ -113,11 +134,30 @@ export class NotificationService implements OnModuleInit {
     }
   }
 
-  async findMine(utilisateurId: number) {
-    return this.prisma.notification.findMany({
-      where: { utilisateurId },
-      orderBy: { date: 'desc' },
-    });
+  // Un compte actif depuis longtemps (ADMIN/MANAGER en particulier, qui
+  // reçoivent des notifications sur toute leur file) peut accumuler des
+  // milliers de lignes : on pagine plutôt que de tout renvoyer d'un coup.
+  async findMine(utilisateurId: number, page = 1, limit = 20) {
+    const take = Math.min(Math.max(limit, 1), 50);
+    const currentPage = Math.max(page, 1);
+    const skip = (currentPage - 1) * take;
+
+    const [data, total] = await Promise.all([
+      this.prisma.notification.findMany({
+        where: { utilisateurId },
+        orderBy: { date: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.notification.count({ where: { utilisateurId } }),
+    ]);
+
+    return {
+      data,
+      total,
+      page: currentPage,
+      totalPages: Math.ceil(total / take),
+    };
   }
 
   async countUnread(utilisateurId: number) {

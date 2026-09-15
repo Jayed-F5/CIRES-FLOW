@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Post, Patch, Param, ParseIntPipe, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  ParseIntPipe,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
@@ -34,42 +44,47 @@ export class AuthController {
     return { message: 'Déconnexion réussie' };
   }
 
-  
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get('users')
+  getUsers() {
+    return this.authService.getUsers();
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
-@Get('users')
-getUsers() {
-  return this.authService.getUsers();
-}
+  @Roles(Role.ADMIN)
+  @Patch('users/:id')
+  updateUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.authService.updateUser(id, dto);
+  }
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
-@Patch('users/:id')
-updateUser(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
-  return this.authService.updateUser(id, dto);
-}
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Patch('users/:id/statut')
+  updateStatutUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateStatutUserDto,
+  ) {
+    return this.authService.updateStatutUser(id, dto.actif);
+  }
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
-@Patch('users/:id/statut')
-updateStatutUser(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStatutUserDto) {
-  return this.authService.updateStatutUser(id, dto.actif);
-}
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getProfile(@Req() req: any) {
+    return this.authService.getMe(req.user.userId);
+  }
 
-@UseGuards(JwtAuthGuard)
-@Get('me')
-getProfile(@Req() req: any) {
-  return this.authService.getMe(req.user.userId);
-}
-
-@UseGuards(JwtAuthGuard)
-@Patch('me/password')
-changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
-  return this.authService.changePassword(
-    req.user.userId,
-    dto.ancienMotDePasse,
-    dto.nouveauMotDePasse,
-  );
-}
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Patch('me/password')
+  changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(
+      req.user.userId,
+      dto.ancienMotDePasse,
+      dto.nouveauMotDePasse,
+    );
+  }
 }

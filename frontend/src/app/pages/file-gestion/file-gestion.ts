@@ -1,9 +1,16 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { DemandeService, Demande, STATUT_LABELS_DETAIL, SLA_LABELS } from '../../services/demande.service';
+import { Subscription, debounceTime } from 'rxjs';
+import {
+  DemandeService,
+  Demande,
+  STATUT_LABELS_DETAIL,
+  SLA_LABELS,
+} from '../../services/demande.service';
 import { DepartementService, Departement, Categorie } from '../../services/departement.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { Header } from '../../shared/header/header';
 
 // Statuts considérés comme "encore ouverts / nécessitant une action".
@@ -24,10 +31,13 @@ const SLA_WEIGHT: Record<string, number> = {
   templateUrl: './file-gestion.html',
   styleUrl: './file-gestion.css',
 })
-export class FileGestion implements OnInit {
+export class FileGestion implements OnInit, OnDestroy {
   private demandeService = inject(DemandeService);
   private departementService = inject(DepartementService);
+  private notificationService = inject(NotificationService);
   authService = inject(AuthService);
+
+  private newNotificationSub?: Subscription;
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -72,12 +82,27 @@ export class FileGestion implements OnInit {
   });
 
   urgentCount = computed(
-    () => this.allOpenDemandes().filter((d) => d.indicateurSLA === 'DEPASSE' || d.indicateurSLA === 'A_RISQUE').length,
+    () =>
+      this.allOpenDemandes().filter(
+        (d) => d.indicateurSLA === 'DEPASSE' || d.indicateurSLA === 'A_RISQUE',
+      ).length,
   );
 
   async ngOnInit(): Promise<void> {
     await Promise.all([this.loadDepartements(), this.loadAllCategories()]);
     await this.loadQueue();
+
+    // Une nouvelle demande, une approbation ou un changement de statut ailleurs
+    // se traduit par une notification : on en profite pour rafraîchir la file
+    // sans attendre que l'utilisateur recharge la page. Le debounce absorbe les
+    // rafales de notifications liées à un même événement.
+    this.newNotificationSub = this.notificationService.newNotification$
+      .pipe(debounceTime(800))
+      .subscribe(() => this.loadQueue());
+  }
+
+  ngOnDestroy(): void {
+    this.newNotificationSub?.unsubscribe();
   }
 
   async loadDepartements(): Promise<void> {
@@ -99,7 +124,9 @@ export class FileGestion implements OnInit {
   }
 
   categorieName(categorieId: number): string {
-    return this.allCategories().find((c) => c.id === categorieId)?.nom ?? `Catégorie ${categorieId}`;
+    return (
+      this.allCategories().find((c) => c.id === categorieId)?.nom ?? `Catégorie ${categorieId}`
+    );
   }
 
   departementName(departementId: number): string {

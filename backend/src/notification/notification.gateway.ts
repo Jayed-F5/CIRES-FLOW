@@ -8,6 +8,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 @WebSocketGateway({
   cors: { origin: process.env.CORS_ORIGIN ?? 'http://localhost:4200' },
@@ -19,9 +20,12 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   private readonly logger = new Logger(NotificationGateway.name);
   private userSockets = new Map<number, Set<string>>();
 
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private prisma: PrismaService,
+  ) {}
 
-  handleConnection(@ConnectedSocket() client: Socket) {
+  async handleConnection(@ConnectedSocket() client: Socket) {
     const token = client.handshake.auth?.token || client.handshake.query?.token;
 
     if (!token) {
@@ -36,6 +40,18 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
       });
 
       const userId = payload.sub;
+
+      const user = await this.prisma.utilisateur.findUnique({
+        where: { id: userId },
+        select: { actif: true },
+      });
+
+      if (!user || !user.actif) {
+        this.logger.warn(`Connexion WebSocket refusée (compte désactivé) : ${client.id}`);
+        client.disconnect();
+        return;
+      }
+
       client.data.userId = userId;
 
       if (!this.userSockets.has(userId)) {

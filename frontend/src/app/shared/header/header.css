@@ -333,6 +333,29 @@
   max-height: 360px;
 }
 
+.notif-load-more {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-top: 1px solid #eceef1;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #031c2d;
+  cursor: pointer;
+}
+
+.notif-load-more:hover {
+  background: #f7f8fa;
+}
+
+.notif-load-more:disabled {
+  color: #9aa2ad;
+  cursor: default;
+}
+
 .notif-empty {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
