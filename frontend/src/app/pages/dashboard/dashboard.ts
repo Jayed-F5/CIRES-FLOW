@@ -117,53 +117,97 @@ export class Dashboard implements OnInit {
     return `tableau-de-bord-${new Date().toISOString().slice(0, 10)}`;
   }
 
+  private addSheet(
+    workbook: import('exceljs').Workbook,
+    name: string,
+    columns: { header: string; key: string; width?: number }[],
+    rows: Record<string, unknown>[],
+  ): void {
+    const sheet = workbook.addWorksheet(name);
+    sheet.columns = columns;
+    sheet.getRow(1).font = { bold: true };
+    sheet.addRows(rows);
+  }
+
   async exportExcel(): Promise<void> {
     const stats = this.stats();
     const performance = this.performance();
     const kpi = this.kpi();
     if (!stats || !performance || !kpi) return;
 
-    const XLSX = await import('xlsx');
+    const ExcelJS = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
 
-    const kpiSheet = XLSX.utils.json_to_sheet([
-      { Indicateur: 'Demandes actives', Valeur: kpi.demandesActives },
-      { Indicateur: "En attente d'approbation", Valeur: kpi.enAttenteApprobation },
-      { Indicateur: 'SLA dépassés', Valeur: kpi.slaDepasses },
-      { Indicateur: 'SLA respectées', Valeur: kpi.slaRespectees },
-      { Indicateur: 'SLA à risque', Valeur: kpi.slaARisque },
-      {
-        Indicateur: 'Temps moyen de résolution (jours)',
-        Valeur: performance.tempsMoyenResolutionHeures !== null
-          ? Math.round((performance.tempsMoyenResolutionHeures / 24) * 10) / 10
-          : '—',
-      },
-      {
-        Indicateur: 'Temps moyen de réponse (heures)',
-        Valeur: performance.tempsMoyenReponseHeures ?? '—',
-      },
-      {
-        Indicateur: 'Taux de respect SLA (%)',
-        Valeur: performance.tauxRespectSLAPourcent ?? '—',
-      },
-    ]);
-
-    const statutSheet = XLSX.utils.json_to_sheet(
-      stats.parStatut.map((s) => ({ Statut: s.statut, Nombre: s.count })),
+    this.addSheet(
+      workbook,
+      'Indicateurs',
+      [
+        { header: 'Indicateur', key: 'indicateur', width: 40 },
+        { header: 'Valeur', key: 'valeur', width: 20 },
+      ],
+      [
+        { indicateur: 'Demandes actives', valeur: kpi.demandesActives },
+        { indicateur: "En attente d'approbation", valeur: kpi.enAttenteApprobation },
+        { indicateur: 'SLA dépassés', valeur: kpi.slaDepasses },
+        { indicateur: 'SLA respectées', valeur: kpi.slaRespectees },
+        { indicateur: 'SLA à risque', valeur: kpi.slaARisque },
+        {
+          indicateur: 'Temps moyen de résolution (jours)',
+          valeur: performance.tempsMoyenResolutionHeures !== null
+            ? Math.round((performance.tempsMoyenResolutionHeures / 24) * 10) / 10
+            : '—',
+        },
+        {
+          indicateur: 'Temps moyen de réponse (heures)',
+          valeur: performance.tempsMoyenReponseHeures ?? '—',
+        },
+        {
+          indicateur: 'Taux de respect SLA (%)',
+          valeur: performance.tauxRespectSLAPourcent ?? '—',
+        },
+      ],
     );
-    const categorieSheet = XLSX.utils.json_to_sheet(
-      stats.parCategorie.map((c) => ({ Catégorie: c.nom, Nombre: c.count })),
-    );
-    const departementSheet = XLSX.utils.json_to_sheet(
-      stats.parDepartement.map((d) => ({ Département: d.nom, Nombre: d.count })),
+
+    this.addSheet(
+      workbook,
+      'Par statut',
+      [
+        { header: 'Statut', key: 'statut', width: 30 },
+        { header: 'Nombre', key: 'nombre', width: 15 },
+      ],
+      stats.parStatut.map((s) => ({ statut: s.statut, nombre: s.count })),
     );
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, kpiSheet, 'Indicateurs');
-    XLSX.utils.book_append_sheet(workbook, statutSheet, 'Par statut');
-    XLSX.utils.book_append_sheet(workbook, categorieSheet, 'Par catégorie');
-    XLSX.utils.book_append_sheet(workbook, departementSheet, 'Par département');
+    this.addSheet(
+      workbook,
+      'Par catégorie',
+      [
+        { header: 'Catégorie', key: 'categorie', width: 30 },
+        { header: 'Nombre', key: 'nombre', width: 15 },
+      ],
+      stats.parCategorie.map((c) => ({ categorie: c.nom, nombre: c.count })),
+    );
 
-    XLSX.writeFile(workbook, `${this.fileBaseName()}.xlsx`);
+    this.addSheet(
+      workbook,
+      'Par département',
+      [
+        { header: 'Département', key: 'departement', width: 30 },
+        { header: 'Nombre', key: 'nombre', width: 15 },
+      ],
+      stats.parDepartement.map((d) => ({ departement: d.nom, nombre: d.count })),
+    );
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${this.fileBaseName()}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   async exportPdf(): Promise<void> {

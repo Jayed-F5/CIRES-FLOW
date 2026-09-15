@@ -1,8 +1,9 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import {
   DemandeService,
   DemandeDetail,
@@ -68,7 +69,7 @@ interface TimelineEvent {
   templateUrl: './detail-demande.html',
   styleUrl: './detail-demande.css',
 })
-export class DetailDemande implements OnInit {
+export class DetailDemande implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private demandeService = inject(DemandeService);
   private departementService = inject(DepartementService);
@@ -181,16 +182,29 @@ export class DetailDemande implements OnInit {
     return action;
   }
 
-  async ngOnInit(): Promise<void> {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    const id = Number(idParam);
-    if (!id) {
-      this.error.set('Identifiant de demande invalide');
-      this.loading.set(false);
-      return;
-    }
-    this.demandeId.set(id);
-    await Promise.all([this.loadLookups(), this.loadAll()]);
+  private paramMapSub?: Subscription;
+
+  ngOnInit(): void {
+    // Le composant est réutilisé par le routeur lorsqu'on navigue de
+    // /demande/5 vers /demande/7 (même config de route, seul le param
+    // change), donc ngOnInit n'est appelé qu'une fois : on doit s'abonner
+    // à paramMap plutôt que de ne lire l'id qu'une seule fois via le
+    // snapshot, sinon un clic sur une autre notification change l'URL
+    // sans jamais recharger les données de la nouvelle demande.
+    this.paramMapSub = this.route.paramMap.subscribe((params) => {
+      const id = Number(params.get('id'));
+      if (!id) {
+        this.error.set('Identifiant de demande invalide');
+        this.loading.set(false);
+        return;
+      }
+      this.demandeId.set(id);
+      void Promise.all([this.loadLookups(), this.loadAll()]);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.paramMapSub?.unsubscribe();
   }
 
   private async loadLookups(): Promise<void> {
